@@ -43,8 +43,8 @@ console.log("El total es", 150);`)}
 <p>Reglas de escritura nuevas:</p>
 <ul><li>Los textos van entre comillas <code>"..."</code> o <code>'...'</code>.</li><li>Cada instrucción termina con punto y coma <code>;</code> (en realidad es opcional, pero se recomienda).</li><li>Los comentarios también son <code>//</code>.</li><li><b>Mayúsculas y minúsculas importan</b>: <code>console.log</code> funciona, <code>Console.Log</code> no.</li></ul>` },
     { h: "Variables: let y const", body: `
-<p>En JavaScript declaras variables con <code>let</code> (si va a cambiar) o <code>const</code> (si no va a cambiar). La asignación se hace con <code>=</code> (lo que en pseudocódigo era <code>&lt;-</code>):</p>
-${TABLE(["Pseudocódigo", "JavaScript"], [["<code>Definir edad Como Entero</code><br><code>edad &lt;- 25</code>", "<code>let edad = 25;</code>"], ["<code>edad &lt;- edad + 1</code>", "<code>edad = edad + 1;</code> o <code>edad++;</code>"], ["(un valor fijo)", "<code>const PI = 3.1416;</code>"]])}
+<p>En JavaScript declaras variables con <code>let</code> (si va a cambiar) o <code>const</code> (si no va a cambiar). La asignación se hace con <code>=</code>, igual que en nuestro pseudocódigo:</p>
+${TABLE(["Pseudocódigo", "JavaScript"], [["<code>Definir edad Como Entero</code><br><code>edad = 25</code>", "<code>let edad = 25;</code>"], ["<code>edad = edad + 1</code>", "<code>edad = edad + 1;</code> o <code>edad++;</code>"], ["(un valor fijo)", "<code>const PI = 3.1416;</code>"]])}
 ${CJ(`let puntos = 10;
 puntos = puntos + 5;
 puntos += 5;       // atajo de puntos = puntos + 5
@@ -68,14 +68,14 @@ console.log("5" - 3);    // 2: convierte a número
 console.log(Number("5") + 3);  // 8: conversión explícita`)}
 ${WARN("Cuando un dato viene del usuario (un formulario, <code>prompt</code>) llega como <b>texto</b>. Conviértelo con <code>Number()</code> antes de hacer cuentas.")}` },
     { h: "Operadores", body: `
-${TABLE(["Pseudocódigo", "JavaScript"], [["<code>+ - * /</code>", "<code>+ - * /</code>"], ["<code>MOD</code>", "<code>%</code>"], ["<code>^</code>", "<code>**</code>"], ["<code>trunc(x)</code>", "<code>Math.trunc(x)</code>"], ["<code>=</code> (comparar)", "<code>===</code>"], ["<code>&lt;&gt;</code>", "<code>!==</code>"], ["<code>Y</code> / <code>O</code> / <code>NO</code>", "<code>&amp;&amp;</code> / <code>||</code> / <code>!</code>"], ["<code>raiz(x)</code>", "<code>Math.sqrt(x)</code>"], ["<code>aleatorio(1,6)</code>", "<code>Math.floor(Math.random() * 6) + 1</code>"]])}
+${TABLE(["Pseudocódigo", "JavaScript"], [["<code>+ - * /</code>", "<code>+ - * /</code>"], ["<code>MOD</code>", "<code>%</code>"], ["<code>^</code>", "<code>**</code>"], ["<code>trunc(x)</code>", "<code>Math.trunc(x)</code>"], ["<code>==</code> (comparar)", "<code>===</code>"], ["<code>&lt;&gt;</code>", "<code>!==</code>"], ["<code>Y</code> / <code>O</code> / <code>NO</code>", "<code>&amp;&amp;</code> / <code>||</code> / <code>!</code>"], ["<code>raiz(x)</code>", "<code>Math.sqrt(x)</code>"], ["<code>aleatorio(1,6)</code>", "<code>Math.floor(Math.random() * 6) + 1</code>"]])}
 ${CJ(`const edad = 20;
 console.log(17 % 5);
 console.log(2 ** 10);
 console.log(edad >= 18 && edad < 65);
 console.log(edad === 20);
 console.log(!(edad > 30));`)}
-${WARN("En JavaScript <code>=</code> asigna y <code>===</code> compara. También existe <code>==</code>, pero convierte tipos de forma confusa (<code>\"5\" == 5</code> es true). Usa siempre <code>===</code> y <code>!==</code>.")}` },
+${WARN("En JavaScript <code>=</code> guarda un valor y <code>===</code> (tres signos) compara. En pseudocódigo comparabas con <code>==</code>: en JavaScript también existe, pero convierte tipos de forma confusa (<code>\"5\" == 5</code> da true). Usa siempre <code>===</code> y <code>!==</code>.")}` },
     { h: "Plantillas de texto", body: `
 <p>Para armar textos con variables, JavaScript tiene las <b>plantillas</b> (template strings): se escriben entre acentos graves <code>\`</code> y las variables van dentro de <code>\${ }</code>:</p>
 ${CJ(`const producto = "Café";
@@ -90,11 +90,11 @@ console.log(\`\${cantidad} x \${producto} = $\${precio * cantidad}\`);`)}
 const PI = 3.14;  // no cambia
 x += 2;  x++;`, "js") },
     { h: "Tipos", body: `<code>number</code> · <code>string</code> · <code>boolean</code> · <code>undefined</code> · <code>null</code><br><code>typeof x</code> dice el tipo. <code>Number(\"5\")</code> convierte.` },
-    { h: "Traducción rápida", body: TABLE(["Pseudo", "JS"], [["&lt;-", "="], ["=", "==="], ["&lt;&gt;", "!=="], ["MOD", "%"], ["Y O NO", "&amp;&amp; || !"], ["^", "**"]]) },
+    { h: "Traducción rápida", body: TABLE(["Pseudo", "JS"], [["=", "="], ["==", "==="], ["&lt;&gt;", "!=="], ["MOD", "%"], ["Y O NO", "&amp;&amp; || !"], ["^", "**"]]) },
     { h: "Plantilla", body: CN("`Hola ${nombre}, tienes ${edad} años`", "js") },
   ],
   quiz: [
-    { q: "¿Cómo se declara una variable que cambiará de valor?", opts: ["const x = 1;", "let x = 1;", "Definir x;", "x <- 1;"], a: 1, why: "let para variables que se reasignan." },
+    { q: "¿Cómo se declara una variable que cambiará de valor?", opts: ["const x = 1;", "let x = 1;", "Definir x;", "x == 1;"], a: 1, why: "let para variables que se reasignan." },
     { q: "¿Qué muestra <code>console.log(10 % 4)</code>?", opts: ["2.5", "2", "6", "40"], a: 1, why: "% es MOD: 10 entre 4 sobra 2." },
     { q: "¿Qué da <code>\"7\" === 7</code>?", opts: ["true", "false", "Error", "\"77\""], a: 1, why: "=== compara también el tipo: string no es igual a number." },
     { q: "¿Cuál es el equivalente de <code>edad >= 18 Y tieneDni</code>?", opts: ["edad >= 18 and tieneDni", "edad >= 18 && tieneDni", "edad >= 18 || tieneDni", "edad >= 18 & tieneDni"], a: 1, why: "&& es el Y lógico." },
@@ -130,7 +130,7 @@ L({
   sections: [
     { h: "Llaves y paréntesis", body: `
 <p>En JavaScript los bloques no terminan con <code>FinSi</code> o <code>FinPara</code>: se encierran entre <b>llaves</b> <code>{ }</code>. Y las condiciones van entre <b>paréntesis</b> <code>( )</code>.</p>
-${TABLE(["Pseudocódigo", "JavaScript"], [["<code>Si cond Entonces</code><br>&nbsp;&nbsp;...<br><code>SiNo</code><br>&nbsp;&nbsp;...<br><code>FinSi</code>", "<code>if (cond) {</code><br>&nbsp;&nbsp;...<br><code>} else {</code><br>&nbsp;&nbsp;...<br><code>}</code>"], ["<code>Mientras cond Hacer ... FinMientras</code>", "<code>while (cond) { ... }</code>"], ["<code>Repetir ... Hasta Que cond</code>", "<code>do { ... } while (!cond);</code>"], ["<code>Para i &lt;- 1 Hasta 10 Hacer</code>", "<code>for (let i = 1; i &lt;= 10; i++) {</code>"], ["<code>Segun x Hacer</code>", "<code>switch (x) {</code>"]])}` },
+${TABLE(["Pseudocódigo", "JavaScript"], [["<code>Si cond Entonces</code><br>&nbsp;&nbsp;...<br><code>SiNo</code><br>&nbsp;&nbsp;...<br><code>FinSi</code>", "<code>if (cond) {</code><br>&nbsp;&nbsp;...<br><code>} else {</code><br>&nbsp;&nbsp;...<br><code>}</code>"], ["<code>Mientras cond Hacer ... FinMientras</code>", "<code>while (cond) { ... }</code>"], ["<code>Repetir ... Hasta Que cond</code>", "<code>do { ... } while (!cond);</code>"], ["<code>Para i = 1 Hasta 10 Hacer</code>", "<code>for (let i = 1; i &lt;= 10; i++) {</code>"], ["<code>Segun x Hacer</code>", "<code>switch (x) {</code>"]])}` },
     { h: "if, else if, else", body: `
 ${CJ(`const nota = 8;
 if (nota >= 9) {
@@ -241,7 +241,7 @@ L({
   summary: "function, return, parámetros por defecto y funciones flecha.",
   sections: [
     { h: "Declarar y llamar funciones", body: `
-${TABLE(["Pseudocódigo", "JavaScript"], [["<code>Funcion r &lt;- Doble(n)</code><br>&nbsp;&nbsp;<code>r &lt;- n * 2</code><br><code>FinFuncion</code>", "<code>function doble(n) {</code><br>&nbsp;&nbsp;<code>return n * 2;</code><br><code>}</code>"]])}
+${TABLE(["Pseudocódigo", "JavaScript"], [["<code>Funcion r = Doble(n)</code><br>&nbsp;&nbsp;<code>r = n * 2</code><br><code>FinFuncion</code>", "<code>function doble(n) {</code><br>&nbsp;&nbsp;<code>return n * 2;</code><br><code>}</code>"]])}
 ${CJ(`function doble(n) {
   return n * 2;
 }

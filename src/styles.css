@@ -321,3 +321,5 @@ pre.mini { font-family: var(--f-mono); background: var(--code-bg); color: var(--
 .brand-name { overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 520px) { .topbar .sync { display: none; } }
 .sync-inline { font-size: 13px; color: var(--muted); }
+/* Sin ligaduras: ==, <=, >= y <> se ven tal cual se escriben */
+code, pre, textarea, .key, .fill, .console, .gutter { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }

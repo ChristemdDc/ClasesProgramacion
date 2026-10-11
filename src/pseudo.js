@@ -306,7 +306,7 @@
           case "para": {
             next();
             const v = ident("para la variable del Para");
-            if (!isOP("<-") && !isOP("=")) throw new PseError("En el Para escribe  variable <- inicio Hasta fin", peek().line);
+            if (!isOP("<-") && !isOP("=")) throw new PseError("En el Para escribe  variable = inicio Hasta fin, por ejemplo  Para i = 1 Hasta 10 Hacer", peek().line);
             next();
             const from = expr();
             expectKW("hasta", "en el Para");
@@ -364,8 +364,8 @@
           endLine();
           return { k: "assign", target, e, line };
         }
-        if (peek().type === "NL") throw new PseError("La instrucción '" + tk.raw + "' está incompleta. Para guardar un valor usa  " + tk.raw + " <- valor", line);
-        throw new PseError("Esperaba '<-' para asignar un valor a '" + tk.raw + "' pero encontré " + show(peek()), peek().line);
+        if (peek().type === "NL") throw new PseError("La instrucción '" + tk.raw + "' está incompleta. Para guardar un valor usa  " + tk.raw + " = valor", line);
+        throw new PseError("Esperaba '=' para asignar un valor a '" + tk.raw + "' pero encontré " + show(peek()), peek().line);
       }
       throw new PseError("No esperaba " + show(tk) + " al inicio de una instrucción", line);
     }
@@ -401,6 +401,7 @@
       let l = addE();
       while (peek().type === "OP" && ["=", "==", "<>", "!=", "<", ">", "<=", ">="].includes(peek().value)) {
         const op = next();
+        if (op.value === "=") throw new PseError("Para comparar si dos valores son iguales usa == (dos signos igual). Un solo = sirve para guardar un valor en una variable", op.line);
         let o = op.value; if (o === "==") o = "="; if (o === "!=") o = "<>";
         l = { k: "bin", op: o, l, r: addE(), line: op.line };
       }
@@ -555,7 +556,7 @@
           const cell = lookup(scope, e.name);
           if (!cell) {
             if (BUILTINS[strip(e.name)] && BUILTINS[strip(e.name)].length === 0) return BUILTINS[strip(e.name)]();
-            throw new PseError("La variable '" + e.raw + "' no existe todavía. Dale un valor antes de usarla (" + e.raw + " <- ...) o léela con Leer", e.line);
+            throw new PseError("La variable '" + e.raw + "' no existe todavía. Dale un valor antes de usarla (" + e.raw + " = ...) o léela con Leer", e.line);
           }
           if (cell.value === undefined) throw new PseError("La variable '" + e.raw + "' fue definida pero todavía no tiene valor", e.line);
           return cell.value;
@@ -613,7 +614,7 @@
         }
         case "=": case "<>": case "<": case ">": case "<=": case ">=": {
           if (typeof l !== typeof r) throw new PseError("No se puede comparar " + typeName(l) + " con " + typeName(r) + " (" + fmt(l) + " y " + fmt(r) + ")", line);
-          if (typeof l === "boolean" && !["=", "<>"].includes(op)) throw new PseError("Los valores lógicos solo se comparan con = o <>", line);
+          if (typeof l === "boolean" && !["=", "<>"].includes(op)) throw new PseError("Los valores lógicos solo se comparan con == o <>", line);
           switch (op) {
             case "=": return l === r;
             case "<>": return l !== r;
@@ -775,7 +776,7 @@
         }
         case "if": {
           const c = await getVal(s.cond, scope);
-          if (typeof c !== "boolean") throw new PseError("La condición del Si debe ser VERDADERO o FALSO, pero dio " + fmt(c) + ". ¿Usaste <- en lugar de = para comparar?", s.line);
+          if (typeof c !== "boolean") throw new PseError("La condición del Si debe ser VERDADERO o FALSO, pero dio " + fmt(c) + ". Una condición necesita una comparación, por ejemplo  x == 5  o  x > 3", s.line);
           if (c) return execBlock(s.then, scope);
           if (s.els) return execBlock(s.els, scope);
           return null;

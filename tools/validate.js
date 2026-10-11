@@ -96,6 +96,12 @@ const INTENTIONAL = /Algoritmo (ConError|TipoIncorrecto|FueraDeRango|Infinito|Am
     else if (!(q.a >= 0 && q.a < q.opts.length)) { fails++; console.log("✘ índice de respuesta inválido", id, q.q); }
     if (!q.why) { fails++; console.log("✘ pregunta sin explicación", id, q.q); }
   }
+  // El código de las preguntas en pseudocódigo debe ser válido
+  for (const [id, q] of allQ) {
+    const pseudo = q.code && q.lang !== "js" && !(CURSO.lessons[id] && CURSO.lessons[id].lang === "js") && !(CURSO.modules.find((m) => m.id === id) || {}).lang?.startsWith("js");
+    if (!pseudo) continue;
+    try { P.parse(q.code); ok++; } catch (e) { fails++; console.log("✘ código de pregunta inválido", id, e.message, "\n" + q.code); }
+  }
   const ids = exercises.map((e) => e.id);
   if (new Set(ids).size !== ids.length) { fails++; console.log("✘ ids de retos repetidos"); }
   console.log(`\n${blocks.length} ejemplos, ${exercises.length} retos, ${allQ.length} preguntas. OK: ${ok}  Fallos: ${fails}`);

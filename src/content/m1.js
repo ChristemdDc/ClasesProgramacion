@@ -5,15 +5,15 @@ MOD({
   lessons: ["l01", "l02", "l03", "l04"],
   exam: {
     extra: [
-      { q: "¿Qué valor tiene <code>x</code> al final?", code: "x <- 4\nx <- x * 2\nx <- x - 3", opts: ["4", "5", "8", "-3"], a: 1, why: "Se ejecuta en orden: x=4, luego 4*2=8, luego 8-3=5." },
+      { q: "¿Qué valor tiene <code>x</code> al final?", code: "x = 4\nx = x * 2\nx = x - 3", opts: ["4", "5", "8", "-3"], a: 1, why: "Se ejecuta en orden: x=4, luego 4*2=8, luego 8-3=5." },
       { q: "¿Qué tipo de dato usarías para guardar el precio de un producto, por ejemplo 19.99?", opts: ["Entero", "Real", "Cadena", "Logico"], a: 1, why: "Tiene decimales, así que es Real." },
       { q: "¿Cuál es el resultado de <code>17 MOD 5</code>?", opts: ["3", "2", "3.4", "12"], a: 1, why: "17 dividido 5 da 3 y sobran 2. MOD devuelve lo que sobra: 2." },
-      { q: "¿Qué muestra este programa?", code: 'a <- "3"\nb <- "4"\nEscribir a + b', opts: ["7", "34", "a+b", "Error"], a: 1, why: "Son textos (están entre comillas). Sumar textos los une: \"3\" + \"4\" = \"34\"." },
+      { q: "¿Qué muestra este programa?", code: 'a = "3"\nb = "4"\nEscribir a + b', opts: ["7", "34", "a+b", "Error"], a: 1, why: "Son textos (están entre comillas). Sumar textos los une: \"3\" + \"4\" = \"34\"." },
       { q: "¿Cuánto vale <code>2 + 3 * 4</code>?", opts: ["20", "14", "24", "9"], a: 1, why: "Primero la multiplicación: 3*4=12, luego 2+12=14." },
       { q: "¿Qué da <code>(5 > 3) Y (2 > 8)</code>?", opts: ["VERDADERO", "FALSO", "Error", "5"], a: 1, why: "Con Y ambas partes deben ser verdaderas. 2 > 8 es falso, así que todo es FALSO." },
       { q: "Un algoritmo debe ser...", opts: ["Largo y detallado", "Preciso, ordenado y finito", "Escrito en inglés", "Ejecutado solo por computadoras"], a: 1, why: "Un algoritmo es una secuencia de pasos precisos, en orden, que termina." },
-      { q: "¿Qué instrucción guarda en la variable <code>edad</code> lo que escribe la persona usuaria?", opts: ["Escribir edad", "edad <- Leer", "Leer edad", "Definir edad"], a: 2, why: "Leer espera a que la persona escriba algo y lo guarda en la variable indicada." },
-      { fill: true, q: "Completa: para asignar el valor 10 a la variable <code>puntos</code> se escribe <code>puntos ___ 10</code>", a: ["<-", "←"], why: "La flecha <- significa \"recibe\": puntos recibe 10." },
+      { q: "¿Qué instrucción guarda en la variable <code>edad</code> lo que escribe la persona usuaria?", opts: ["Escribir edad", "edad = Leer", "Leer edad", "Definir edad"], a: 2, why: "Leer espera a que la persona escriba algo y lo guarda en la variable indicada." },
+      { fill: true, q: "Completa: para asignar el valor 10 a la variable <code>puntos</code> se escribe <code>puntos ___ 10</code>", a: ["="], why: "Un solo = significa \"guarda\": puntos recibe el valor 10." },
       { q: "¿Cuál de estos nombres de variable es válido?", opts: ["2numero", "mi nombre", "total_ventas", "Si"], a: 2, why: "No puede empezar con número, ni tener espacios, ni ser palabra reservada como Si." },
     ],
     challenge: {
@@ -23,7 +23,7 @@ MOD({
       starter: 'Algoritmo Propina\n\tDefinir cuenta, propina Como Real\n\tDefinir porcentaje Como Entero\n\tEscribir "Total de la cuenta:"\n\tLeer cuenta\n\t// Completa aquí\n\nFinAlgoritmo',
       tests: [{ in: ["100", "10"], out: "Total a pagar: 110" }, { in: ["80", "15"], out: "Total a pagar: 92" }, { in: ["45.5", "20"], out: "Total a pagar: 54.6" }],
       hint: "La propina es cuenta * porcentaje / 100. Luego suma la cuenta y la propina.",
-      solution: 'Algoritmo Propina\n\tDefinir cuenta, propina Como Real\n\tDefinir porcentaje Como Entero\n\tEscribir "Total de la cuenta:"\n\tLeer cuenta\n\tEscribir "Porcentaje de propina:"\n\tLeer porcentaje\n\tpropina <- cuenta * porcentaje / 100\n\tEscribir "Propina: ", propina\n\tEscribir "Total a pagar: ", cuenta + propina\nFinAlgoritmo'
+      solution: 'Algoritmo Propina\n\tDefinir cuenta, propina Como Real\n\tDefinir porcentaje Como Entero\n\tEscribir "Total de la cuenta:"\n\tLeer cuenta\n\tEscribir "Porcentaje de propina:"\n\tLeer porcentaje\n\tpropina = cuenta * porcentaje / 100\n\tEscribir "Propina: ", propina\n\tEscribir "Total a pagar: ", cuenta + propina\nFinAlgoritmo'
     }
   }
 });
@@ -126,30 +126,31 @@ L({
     { h: "Una variable es una caja con nombre", body: `
 <p>Los programas necesitan <b>recordar</b> datos: el nombre de alguien, un precio, cuántos puntos lleva un jugador. Para eso usamos <b>variables</b>.</p>
 ${IDEA("Una variable es como una caja con una etiqueta. La etiqueta es el <b>nombre</b> (por ejemplo <code>edad</code>) y dentro guardas un <b>valor</b> (por ejemplo <code>25</code>). Puedes mirar qué hay dentro o reemplazarlo por otra cosa, pero la caja solo guarda un valor a la vez.")}
-<p>Para guardar un valor en una variable usamos la flecha <code>&lt;-</code>, que se lee <b>«recibe»</b>:</p>
+<p>Para guardar un valor en una variable usamos el signo <code>=</code>, que aquí se lee <b>«recibe»</b> o <b>«guarda»</b>:</p>
 ${C(`Algoritmo Variables
-	edad <- 25
-	nombre <- "Ada"
+	edad = 25
+	nombre = "Ada"
 	Escribir nombre
 	Escribir edad
 FinAlgoritmo`)}
-<p><code>edad &lt;- 25</code> se lee «edad recibe 25». Esta operación se llama <b>asignación</b>.</p>
+<p><code>edad = 25</code> se lee «edad recibe 25». Esta operación se llama <b>asignación</b>.</p>
+${WARN("En matemáticas <code>=</code> significa «es igual a». En programación, un solo <code>=</code> significa <b>guardar un valor</b>. Para <b>preguntar</b> si dos valores son iguales se usan dos: <code>==</code>. Lo verás en la lección 4.")}
 ${TIP("Fíjate en la diferencia: <code>Escribir nombre</code> muestra el <i>contenido</i> de la variable (Ada). <code>Escribir \"nombre\"</code> muestra literalmente la palabra nombre.")}` },
     { h: "El valor puede cambiar", body: `
 <p>Por eso se llama <i>variable</i>. Cuando asignas un valor nuevo, el anterior <b>se pierde</b>:</p>
 ${C(`Algoritmo Cambia
-	puntos <- 10
+	puntos = 10
 	Escribir puntos
-	puntos <- 50
+	puntos = 50
 	Escribir puntos
 FinAlgoritmo`)}
 <p>Algo muy común es calcular el nuevo valor <b>a partir del anterior</b>. Mira esto:</p>
 ${C(`Algoritmo Incrementar
-	vidas <- 3
-	vidas <- vidas + 1
+	vidas = 3
+	vidas = vidas + 1
 	Escribir vidas
 FinAlgoritmo`)}
-<p><code>vidas &lt;- vidas + 1</code> no es una ecuación matemática. Se ejecuta así: <b>primero</b> se calcula el lado derecho (3 + 1 = 4) y <b>después</b> ese resultado se guarda en <code>vidas</code>. Regla de oro: <b>la derecha se calcula primero, luego se guarda a la izquierda</b>.</p>` },
+<p><code>vidas = vidas + 1</code> no es una ecuación matemática. Se ejecuta así: <b>primero</b> se calcula el lado derecho (3 + 1 = 4) y <b>después</b> ese resultado se guarda en <code>vidas</code>. Regla de oro: <b>la derecha se calcula primero, luego se guarda a la izquierda</b>.</p>` },
     { h: "Tipos de datos", body: `
 <p>No todos los datos son iguales. No es lo mismo un número que un texto. Estos son los tipos básicos:</p>
 ${TABLE(["Tipo", "Qué guarda", "Ejemplos"], [["<b>Entero</b>", "Números sin decimales", "<code>7</code>, <code>-3</code>, <code>2026</code>"], ["<b>Real</b>", "Números con decimales", "<code>3.14</code>, <code>-0.5</code>, <code>19.99</code>"], ["<b>Cadena</b>", "Texto (siempre entre comillas)", "<code>\"Hola\"</code>, <code>\"Ana\"</code>, <code>\"123\"</code>"], ["<b>Logico</b>", "Solo dos valores: verdadero o falso", "<code>Verdadero</code>, <code>Falso</code>"]])}
@@ -160,10 +161,10 @@ ${C(`Algoritmo Tipos
 	Definir nombre Como Cadena
 	Definir esEstudiante Como Logico
 
-	edad <- 30
-	altura <- 1.68
-	nombre <- "Grace"
-	esEstudiante <- Verdadero
+	edad = 30
+	altura = 1.68
+	nombre = "Grace"
+	esEstudiante = Verdadero
 
 	Escribir nombre, " tiene ", edad, " años"
 	Escribir "¿Estudia? ", esEstudiante
@@ -171,7 +172,7 @@ FinAlgoritmo`)}
 <p>¿Por qué definir? Porque así la computadora te avisa si te equivocas. Prueba esto:</p>
 ${C(`Algoritmo TipoIncorrecto
 	Definir edad Como Entero
-	edad <- "treinta"
+	edad = "treinta"
 FinAlgoritmo`)}
 ${WARN("<code>\"123\"</code> (con comillas) es un texto, no un número. No puedes hacer cuentas con él. <code>123</code> (sin comillas) sí es un número.")}
 ${PRO("En lenguajes como Java, C# o TypeScript es obligatorio indicar el tipo. En JavaScript o Python no, pero los tipos siguen existiendo y causan muchos errores si no los entiendes. Por eso aprenderlos ahora es tan valioso.")}` },
@@ -184,19 +185,19 @@ ${TABLE(["Nombre", "¿Válido?", "Por qué"], [["<code>nombre</code>", "✔", "C
     { h: "Prueba de escritorio", body: `
 <p>Una <b>prueba de escritorio</b> es seguir un programa a mano, paso a paso, anotando cuánto vale cada variable. Es la mejor forma de entender qué hace un código. Hagámosla con este:</p>
 ${C(`Algoritmo Prueba
-	a <- 5
-	b <- 3
-	a <- a + b
-	b <- a - b
+	a = 5
+	b = 3
+	a = a + b
+	b = a - b
 	Escribir a, " ", b
 FinAlgoritmo`)}
-${TABLE(["Línea", "a", "b"], [["a <- 5", "5", "—"], ["b <- 3", "5", "3"], ["a <- a + b", "8", "3"], ["b <- a - b", "8", "5"]])}
+${TABLE(["Línea", "a", "b"], [["a = 5", "5", "—"], ["b = 3", "5", "3"], ["a = a + b", "8", "3"], ["b = a - b", "8", "5"]])}
 <p>Resultado: muestra <code>8 5</code>. En el Laboratorio tienes el botón <b>Paso a paso</b>, que hace esta tabla automáticamente: ejecuta una línea por vez y te muestra el valor de cada variable.</p>
 ${TIP("Cuando un programa no hace lo que esperas, haz una prueba de escritorio. En el 90% de los casos encontrarás el error.")}` },
   ],
   cheat: [
-    { h: "Asignar (guardar un valor)", body: CN(`variable <- valor
-contador <- contador + 1   // derecha primero, luego guarda`) },
+    { h: "Asignar (guardar un valor)", body: CN(`variable = valor
+contador = contador + 1   // derecha primero, luego guarda`) },
     { h: "Definir tipos", body: CN(`Definir edad Como Entero
 Definir precio Como Real
 Definir nombre Como Cadena
@@ -205,27 +206,27 @@ Definir activo Como Logico`) },
     { h: "Nombres", body: `<ul><li>Empiezan con letra, sin espacios, sin palabras reservadas.</li><li>Descriptivos y en camelCase: <code>precioFinal</code>.</li></ul>` },
   ],
   quiz: [
-    { q: "¿Qué muestra este programa?", code: "x <- 7\nx <- 2\nEscribir x", opts: ["7", "2", "9", "72"], a: 1, why: "Al asignar 2, el valor 7 se pierde. Una variable guarda un solo valor." },
-    { q: "¿Qué valor tiene <code>total</code> al final?", code: "total <- 10\ntotal <- total + 5\ntotal <- total * 2", opts: ["10", "15", "30", "25"], a: 2, why: "10, luego 10+5=15, luego 15*2=30." },
+    { q: "¿Qué muestra este programa?", code: "x = 7\nx = 2\nEscribir x", opts: ["7", "2", "9", "72"], a: 1, why: "Al asignar 2, el valor 7 se pierde. Una variable guarda un solo valor." },
+    { q: "¿Qué valor tiene <code>total</code> al final?", code: "total = 10\ntotal = total + 5\ntotal = total * 2", opts: ["10", "15", "30", "25"], a: 2, why: "10, luego 10+5=15, luego 15*2=30." },
     { q: "¿Qué tipo de dato es <code>\"2026\"</code>?", opts: ["Entero", "Real", "Cadena", "Logico"], a: 2, why: "Está entre comillas, así que es texto (Cadena), aunque contenga dígitos." },
     { q: "¿Qué tipo usarías para guardar si una persona aceptó los términos y condiciones?", opts: ["Entero", "Cadena", "Logico", "Real"], a: 2, why: "Solo hay dos posibilidades (aceptó o no): Logico." },
     { q: "¿Cuál es un buen nombre de variable para la cantidad de alumnos?", opts: ["c", "cantidad alumnos", "cantidadAlumnos", "3alumnos"], a: 2, why: "Es descriptivo, no tiene espacios y no empieza con número." },
-    { q: "Después de ejecutar esto, ¿cuánto valen a y b?", code: "a <- 1\nb <- a\na <- 9", opts: ["a=9, b=9", "a=9, b=1", "a=1, b=1", "a=1, b=9"], a: 1, why: "b recibió una copia del valor de a (1) en ese momento. Cambiar a después no afecta a b." },
-    { fill: true, q: "¿Qué muestra?", code: 'nombre <- "Lin"\nEscribir "nombre"', a: ["nombre"], why: "Entre comillas es un texto literal. Para mostrar el contenido se escribe sin comillas." },
+    { q: "Después de ejecutar esto, ¿cuánto valen a y b?", code: "a = 1\nb = a\na = 9", opts: ["a=9, b=9", "a=9, b=1", "a=1, b=1", "a=1, b=9"], a: 1, why: "b recibió una copia del valor de a (1) en ese momento. Cambiar a después no afecta a b." },
+    { fill: true, q: "¿Qué muestra?", code: 'nombre = "Lin"\nEscribir "nombre"', a: ["nombre"], why: "Entre comillas es un texto literal. Para mostrar el contenido se escribe sin comillas." },
   ],
   exercises: [
     { id: "ex02a", title: "Área de un rectángulo", lang: "pseudo",
       text: "Guarda en variables la base (8) y la altura (5) de un rectángulo. Calcula el área en otra variable y muéstrala así:<br><code>Área: 40</code>",
       starter: "Algoritmo Area\n\tDefinir base, altura, area Como Entero\n\t\nFinAlgoritmo",
       tests: [{ in: [], out: "Área: 40" }],
-      hint: "area <- base * altura. Para mostrar texto y variable juntos: Escribir \"Área: \", area",
-      solution: 'Algoritmo Area\n\tDefinir base, altura, area Como Entero\n\tbase <- 8\n\taltura <- 5\n\tarea <- base * altura\n\tEscribir "Área: ", area\nFinAlgoritmo' },
+      hint: "area = base * altura. Para mostrar texto y variable juntos: Escribir \"Área: \", area",
+      solution: 'Algoritmo Area\n\tDefinir base, altura, area Como Entero\n\tbase = 8\n\taltura = 5\n\tarea = base * altura\n\tEscribir "Área: ", area\nFinAlgoritmo' },
     { id: "ex02b", title: "Intercambiar valores", lang: "pseudo",
-      text: "Tienes <code>a &lt;- 5</code> y <code>b &lt;- 8</code>. Intercambia sus valores (que a valga 8 y b valga 5) <b>sin escribir los números 5 u 8 de nuevo</b>. Al final muestra:<br><code>a=8 b=5</code>",
-      starter: 'Algoritmo Intercambio\n\ta <- 5\n\tb <- 8\n\t// Intercambia aquí\n\n\tEscribir "a=", a, " b=", b\nFinAlgoritmo',
+      text: "Tienes <code>a = 5</code> y <code>b = 8</code>. Intercambia sus valores (que a valga 8 y b valga 5) <b>sin escribir los números 5 u 8 de nuevo</b>. Al final muestra:<br><code>a=8 b=5</code>",
+      starter: 'Algoritmo Intercambio\n\ta = 5\n\tb = 8\n\t// Intercambia aquí\n\n\tEscribir "a=", a, " b=", b\nFinAlgoritmo',
       tests: [{ in: [], out: "a=8 b=5" }],
       hint: "Usa una tercera variable auxiliar como «vaso vacío»: guarda a en aux, luego pon b en a, y por último aux en b.",
-      solution: 'Algoritmo Intercambio\n\ta <- 5\n\tb <- 8\n\taux <- a\n\ta <- b\n\tb <- aux\n\tEscribir "a=", a, " b=", b\nFinAlgoritmo' },
+      solution: 'Algoritmo Intercambio\n\ta = 5\n\tb = 8\n\taux = a\n\ta = b\n\tb = aux\n\tEscribir "a=", a, " b=", b\nFinAlgoritmo' },
   ]
 });
 
@@ -246,8 +247,8 @@ ${TIP("Siempre muestra un mensaje antes de Leer para que la persona sepa qué ti
     { h: "Escribir: mostrar varias cosas", body: `
 <p>Con <code>Escribir</code> puedes mostrar varias cosas separadas por comas. Se muestran pegadas, así que tú controlas los espacios:</p>
 ${C(`Algoritmo Mostrar
-	precio <- 250
-	cantidad <- 3
+	precio = 250
+	cantidad = 3
 	Escribir "Precio: ", precio
 	Escribir "Llevas ", cantidad, " unidades"
 	Escribir "Total: ", precio * cantidad
@@ -275,9 +276,9 @@ FinAlgoritmo`)}
 <p>Con <code>+</code> entre textos los <b>unes</b> (esto se llama <b>concatenar</b>):</p>
 ${C(`Algoritmo Concatenar
 	Definir nombre, apellido, completo Como Cadena
-	nombre <- "Alan"
-	apellido <- "Turing"
-	completo <- nombre + " " + apellido
+	nombre = "Alan"
+	apellido = "Turing"
+	completo = nombre + " " + apellido
 	Escribir completo
 FinAlgoritmo`)}
 ${WARN("<code>\"5\" + \"5\"</code> da <code>\"55\"</code> (une textos), mientras que <code>5 + 5</code> da <code>10</code>. Este error es clásico en JavaScript cuando los datos vienen de un formulario: siempre llegan como texto.")}` },
@@ -295,7 +296,7 @@ ${C(`Algoritmo Edad2030
 	Leer edad
 
 	// Proceso
-	edadFutura <- edad + (2030 - 2026)
+	edadFutura = edad + (2030 - 2026)
 
 	// Salida
 	Escribir nombre, ", en 2030 tendrás ", edadFutura, " años"
@@ -307,13 +308,13 @@ ${PRO("Separar el código en bloques con comentarios (entrada / proceso / salida
 Leer edad`) },
     { h: "Mostrar varias cosas", body: CN(`Escribir "Total: ", total, " pesos"
 Escribir Sin Saltar "misma línea"`) },
-    { h: "Unir textos", body: CN(`completo <- nombre + " " + apellido`) },
+    { h: "Unir textos", body: CN(`completo = nombre + " " + apellido`) },
     { h: "Recuerda", body: `<ul><li>Mensaje claro antes de cada <code>Leer</code>.</li><li><code>\"5\"+\"5\"</code> = <code>\"55\"</code>; <code>5+5</code> = <code>10</code>.</li><li>Esquema: entrada → proceso → salida.</li></ul>` },
   ],
   quiz: [
     { q: "¿Qué hace <code>Leer precio</code>?", opts: ["Muestra el precio", "Espera que la persona escriba un valor y lo guarda en precio", "Borra la variable precio", "Define el tipo de precio"], a: 1, why: "Leer detiene el programa hasta que la persona escribe algo y lo guarda en la variable." },
-    { q: "¿Qué muestra?", code: 'a <- 4\nEscribir "a", a', opts: ["a4", "44", "a a", "4"], a: 0, why: "Primero el texto literal \"a\" y luego el valor de la variable a (4), pegados: a4." },
-    { q: "¿Qué muestra?", code: 'x <- "10"\ny <- "20"\nEscribir x + y', opts: ["30", "1020", "x+y", "Error"], a: 1, why: "Son textos: + los concatena." },
+    { q: "¿Qué muestra?", code: 'a = 4\nEscribir "a", a', opts: ["a4", "44", "a a", "4"], a: 0, why: "Primero el texto literal \"a\" y luego el valor de la variable a (4), pegados: a4." },
+    { q: "¿Qué muestra?", code: 'a = "10"\nb = "20"\nEscribir a + b', opts: ["30", "1020", "a+b", "Error"], a: 1, why: "Son textos: + los concatena." },
     { q: "Si escribes <i>hola</i> cuando el programa hace <code>Leer n</code> y <code>n</code> es Entero...", opts: ["n vale 0", "n vale \"hola\"", "Da un error porque se esperaba un número", "Se ignora"], a: 2, why: "La variable es Entero y \"hola\" no es un número: el programa avisa del error." },
     { q: "¿Cuál es la mejor forma de pedir la edad?", opts: ["Leer edad", "Escribir \"Edad:\" y luego Leer edad", "Escribir edad", "Leer \"edad\""], a: 1, why: "Siempre conviene avisar qué dato se espera antes de leerlo." },
     { q: "¿Qué muestra?", code: 'Escribir Sin Saltar "Ho"\nEscribir "la"', opts: ["Ho la (en dos líneas)", "Hola", "Ho la", "Error"], a: 1, why: "Sin Saltar no hace salto de línea, así que \"la\" se escribe a continuación." },
@@ -335,8 +336,8 @@ Escribir Sin Saltar "misma línea"`) },
       text: "Pide nombre y apellido por separado. Guarda en una variable <code>completo</code> el apellido, una coma, un espacio y el nombre, y muéstrala. Ejemplo: con <i>Ada</i> y <i>Lovelace</i> la última línea es <code>Lovelace, Ada</code>",
       starter: "Algoritmo NombreCompleto\n\tDefinir nombre, apellido, completo Como Cadena\n\t\nFinAlgoritmo",
       tests: [{ in: ["Ada", "Lovelace"], out: "Lovelace, Ada" }, { in: ["Alan", "Turing"], out: "Turing, Alan" }],
-      hint: "completo <- apellido + \", \" + nombre",
-      solution: 'Algoritmo NombreCompleto\n\tDefinir nombre, apellido, completo Como Cadena\n\tEscribir "Nombre:"\n\tLeer nombre\n\tEscribir "Apellido:"\n\tLeer apellido\n\tcompleto <- apellido + ", " + nombre\n\tEscribir completo\nFinAlgoritmo' },
+      hint: "completo = apellido + \", \" + nombre",
+      solution: 'Algoritmo NombreCompleto\n\tDefinir nombre, apellido, completo Como Cadena\n\tEscribir "Nombre:"\n\tLeer nombre\n\tEscribir "Apellido:"\n\tLeer apellido\n\tcompleto = apellido + ", " + nombre\n\tEscribir completo\nFinAlgoritmo' },
   ]
 });
 
@@ -355,14 +356,14 @@ ${C(`Algoritmo Cuentas
 FinAlgoritmo`)}
 <p><code>trunc()</code> corta los decimales (división entera). Junto con <code>MOD</code> sirve para muchas cosas, como pasar segundos a minutos.</p>` },
     { h: "MOD: el resto, un operador muy útil", body: `
-<p><code>MOD</code> devuelve lo que <b>sobra</b> en una división. 17 entre 5 cabe 3 veces (15) y sobran 2, así que <code>17 MOD 5 = 2</code>.</p>
+<p><code>MOD</code> devuelve lo que <b>sobra</b> en una división. 17 entre 5 cabe 3 veces (15) y sobran 2, así que <code>17 MOD 5</code> da <code>2</code>.</p>
 <p>¿Para qué sirve? Para muchísimas cosas:</p>
-<ul><li><b>Saber si un número es par:</b> <code>n MOD 2 = 0</code>.</li><li><b>Saber si es divisible:</b> <code>n MOD 3 = 0</code> significa que n es múltiplo de 3.</li><li><b>Obtener el último dígito:</b> <code>1234 MOD 10 = 4</code>.</li><li><b>Convertir unidades:</b> 125 segundos son <code>trunc(125/60) = 2</code> minutos y <code>125 MOD 60 = 5</code> segundos.</li></ul>
+<ul><li><b>Saber si un número es par:</b> <code>n MOD 2 == 0</code>.</li><li><b>Saber si es divisible:</b> <code>n MOD 3 == 0</code> significa que n es múltiplo de 3.</li><li><b>Obtener el último dígito:</b> <code>1234 MOD 10</code> da <code>4</code>.</li><li><b>Convertir unidades:</b> 125 segundos son <code>trunc(125/60)</code> (2) minutos y <code>125 MOD 60</code> (5) segundos.</li></ul>
 ${C(`Algoritmo Tiempo
 	Definir total, minutos, segundos Como Entero
-	total <- 125
-	minutos <- trunc(total / 60)
-	segundos <- total MOD 60
+	total = 125
+	minutos = trunc(total / 60)
+	segundos = total MOD 60
 	Escribir total, " segundos son ", minutos, " min y ", segundos, " s"
 FinAlgoritmo`)}` },
     { h: "Orden de las operaciones", body: `
@@ -378,22 +379,22 @@ FinAlgoritmo`)}
 ${WARN("El error del promedio sin paréntesis es uno de los más comunes. Si dudas, usa paréntesis: nunca está mal ser explícito.")}` },
     { h: "Operadores de comparación", body: `
 <p>Comparan dos valores y el resultado es siempre un <b>valor lógico</b>: <code>VERDADERO</code> o <code>FALSO</code>.</p>
-${TABLE(["Operador", "Pregunta", "Ejemplo", "Resultado"], [["<code>=</code>", "¿Son iguales?", "<code>5 = 5</code>", "VERDADERO"], ["<code>&lt;&gt;</code>", "¿Son distintos?", "<code>5 &lt;&gt; 3</code>", "VERDADERO"], ["<code>&lt;</code>", "¿Menor que?", "<code>2 &lt; 1</code>", "FALSO"], ["<code>&gt;</code>", "¿Mayor que?", "<code>9 &gt; 4</code>", "VERDADERO"], ["<code>&lt;=</code>", "¿Menor o igual?", "<code>3 &lt;= 3</code>", "VERDADERO"], ["<code>&gt;=</code>", "¿Mayor o igual?", "<code>2 &gt;= 5</code>", "FALSO"]])}
+${TABLE(["Operador", "Pregunta", "Ejemplo", "Resultado"], [["<code>==</code>", "¿Son iguales?", "<code>5 == 5</code>", "VERDADERO"], ["<code>&lt;&gt;</code>", "¿Son distintos?", "<code>5 &lt;&gt; 3</code>", "VERDADERO"], ["<code>&lt;</code>", "¿Menor que?", "<code>2 &lt; 1</code>", "FALSO"], ["<code>&gt;</code>", "¿Mayor que?", "<code>9 &gt; 4</code>", "VERDADERO"], ["<code>&lt;=</code>", "¿Menor o igual?", "<code>3 &lt;= 3</code>", "VERDADERO"], ["<code>&gt;=</code>", "¿Mayor o igual?", "<code>2 &gt;= 5</code>", "FALSO"]])}
 ${C(`Algoritmo Comparar
-	edad <- 17
+	edad = 17
 	Escribir "¿Es mayor de edad? ", edad >= 18
-	Escribir "¿Es par? ", edad MOD 2 = 0
-	Escribir "¿Se llama Ana? ", "Ana" = "Ana"
+	Escribir "¿Es par? ", edad MOD 2 == 0
+	Escribir "¿Se llama Ana? ", "Ana" == "Ana"
 FinAlgoritmo`)}
-${TIP("No confundas <code>&lt;-</code> (asignar: guardar un valor) con <code>=</code> (comparar: preguntar si son iguales). En JavaScript serán <code>=</code> y <code>===</code>, y confundirlos es un error clásico.")}` },
+${TIP("No confundas <code>=</code> (asignar: guardar un valor) con <code>==</code> (comparar: preguntar si son iguales). Si escribes <code>Si edad = 18</code>, el programa te avisará que para comparar se usa <code>==</code>. En JavaScript es parecido: <code>=</code> guarda y <code>===</code> compara.")}` },
     { h: "Operadores lógicos: Y, O, NO", body: `
 <p>Sirven para combinar condiciones.</p>
 <ul><li><b>Y</b>: verdadero solo si <b>ambas</b> partes son verdaderas. «Puedes entrar si tienes entrada <b>y</b> eres mayor de edad».</li><li><b>O</b>: verdadero si <b>al menos una</b> es verdadera. «Hay descuento si eres estudiante <b>o</b> jubilado».</li><li><b>NO</b>: invierte el valor. <code>NO Verdadero</code> es <code>FALSO</code>.</li></ul>
 <p><b>Tablas de verdad</b> (V = verdadero, F = falso):</p>
 ${TABLE(["A", "B", "A Y B", "A O B", "NO A"], [["V", "V", "V", "V", "F"], ["V", "F", "F", "V", "F"], ["F", "V", "F", "V", "V"], ["F", "F", "F", "F", "V"]])}
 ${C(`Algoritmo Logicos
-	edad <- 25
-	tieneEntrada <- Verdadero
+	edad = 25
+	tieneEntrada = Verdadero
 	Escribir "¿Puede entrar? ", edad >= 18 Y tieneEntrada
 	Escribir "¿Edad entre 18 y 30? ", edad >= 18 Y edad <= 30
 	Escribir "¿Es niño o jubilado? ", edad < 12 O edad >= 65
@@ -409,10 +410,10 @@ FinAlgoritmo`)}` },
   ],
   cheat: [
     { h: "Aritméticos", body: TABLE(["Op", "Ejemplo", "="], [["+ - * /", "7 / 2", "3.5"], ["^", "2 ^ 3", "8"], ["MOD", "7 MOD 2", "1"], ["trunc()", "trunc(7/2)", "3"]]) },
-    { h: "Comparación (dan V/F)", body: `<code>=</code> igual · <code>&lt;&gt;</code> distinto · <code>&lt; &gt; &lt;= &gt;=</code>` },
+    { h: "Comparación (dan V/F)", body: `<code>==</code> igual · <code>&lt;&gt;</code> distinto · <code>&lt; &gt; &lt;= &gt;=</code>` },
     { h: "Lógicos", body: `<ul><li><b>Y</b>: las dos verdaderas.</li><li><b>O</b>: al menos una.</li><li><b>NO</b>: invierte.</li></ul>` },
     { h: "Orden", body: `<code>( )</code> → <code>^</code> → <code>* / MOD</code> → <code>+ -</code> → comparaciones → <code>NO</code> → <code>Y</code> → <code>O</code>` },
-    { h: "Trucos con MOD", body: CN(`n MOD 2 = 0      // ¿es par?
+    { h: "Trucos con MOD", body: CN(`n MOD 2 == 0      // ¿es par?
 n MOD 10         // último dígito
 trunc(s / 60)    // minutos
 s MOD 60         // segundos que sobran`) },
@@ -420,7 +421,7 @@ s MOD 60         // segundos que sobran`) },
   quiz: [
     { q: "¿Cuánto da <code>10 MOD 3</code>?", opts: ["3", "1", "3.33", "0"], a: 1, why: "10 entre 3 cabe 3 veces (9) y sobra 1." },
     { q: "¿Cuánto da <code>(4 + 6) / 2 * 3</code>?", opts: ["15", "1.66", "11", "30"], a: 0, why: "Paréntesis: 10. Luego de izquierda a derecha: 10/2=5, 5*3=15." },
-    { q: "¿Qué condición dice si <code>n</code> es múltiplo de 5?", opts: ["n / 5 = 0", "n MOD 5 = 0", "n MOD 5 = 5", "n = 5"], a: 1, why: "Si el resto de dividir entre 5 es 0, es múltiplo de 5." },
+    { q: "¿Qué condición dice si <code>n</code> es múltiplo de 5?", opts: ["n / 5 == 0", "n MOD 5 == 0", "n MOD 5 == 5", "n == 5"], a: 1, why: "Si el resto de dividir entre 5 es 0, es múltiplo de 5." },
     { q: "¿Qué da <code>Verdadero O Falso</code>?", opts: ["VERDADERO", "FALSO", "Error", "Depende"], a: 0, why: "Con O basta que una sea verdadera." },
     { q: "¿Qué da <code>NO (3 > 1)</code>?", opts: ["VERDADERO", "FALSO", "3", "Error"], a: 1, why: "3 > 1 es verdadero; NO lo invierte a falso." },
     { q: "¿Cuál comprueba que la nota esté entre 1 y 10 (incluidos)?", opts: ["1 <= nota <= 10", "nota >= 1 Y nota <= 10", "nota >= 1 O nota <= 10", "nota = 1 Y nota = 10"], a: 1, why: "Hay que repetir la variable y unir con Y. Con O cualquier número cumpliría." },
@@ -432,8 +433,8 @@ s MOD 60         // segundos que sobran`) },
       text: "Lee una cantidad de segundos (entero) y muestra cuántas horas, minutos y segundos son. La última línea debe tener el formato:<br><code>H h M min S s</code><br>Ejemplo: con 3725 → <code>1 h 2 min 5 s</code>",
       starter: "Algoritmo Segundos\n\tDefinir total, h, m, s Como Entero\n\tEscribir \"Segundos:\"\n\tLeer total\n\t\nFinAlgoritmo",
       tests: [{ in: ["3725"], out: "1 h 2 min 5 s" }, { in: ["59"], out: "0 h 0 min 59 s" }, { in: ["7200"], out: "2 h 0 min 0 s" }],
-      hint: "Una hora tiene 3600 segundos. h <- trunc(total / 3600). Lo que sobra es total MOD 3600; de eso saca los minutos con 60.",
-      solution: 'Algoritmo Segundos\n\tDefinir total, h, m, s Como Entero\n\tEscribir "Segundos:"\n\tLeer total\n\th <- trunc(total / 3600)\n\tm <- trunc((total MOD 3600) / 60)\n\ts <- total MOD 60\n\tEscribir h, " h ", m, " min ", s, " s"\nFinAlgoritmo' },
+      hint: "Una hora tiene 3600 segundos. h = trunc(total / 3600). Lo que sobra es total MOD 3600; de eso saca los minutos con 60.",
+      solution: 'Algoritmo Segundos\n\tDefinir total, h, m, s Como Entero\n\tEscribir "Segundos:"\n\tLeer total\n\th = trunc(total / 3600)\n\tm = trunc((total MOD 3600) / 60)\n\ts = total MOD 60\n\tEscribir h, " h ", m, " min ", s, " s"\nFinAlgoritmo' },
     { id: "ex04b", title: "Grados Celsius a Fahrenheit", lang: "pseudo",
       text: "Lee una temperatura en grados Celsius (Real) y muéstrala en Fahrenheit con la fórmula F = C × 9 / 5 + 32. Última línea: <code>X °F</code>",
       starter: "Algoritmo Temperatura\n\tDefinir c Como Real\n\t\nFinAlgoritmo",
@@ -444,7 +445,7 @@ s MOD 60         // segundos que sobran`) },
       text: "Lee un número entero y muestra en la última línea <code>VERDADERO</code> si es par o <code>FALSO</code> si es impar. (Todavía sin usar Si: solo con una comparación).",
       starter: "Algoritmo EsPar\n\tDefinir n Como Entero\n\t\nFinAlgoritmo",
       tests: [{ in: ["8"], out: "VERDADERO" }, { in: ["7"], out: "FALSO" }, { in: ["0"], out: "VERDADERO" }],
-      hint: "Escribir n MOD 2 = 0",
-      solution: 'Algoritmo EsPar\n\tDefinir n Como Entero\n\tEscribir "Número:"\n\tLeer n\n\tEscribir n MOD 2 = 0\nFinAlgoritmo' },
+      hint: "Escribir n MOD 2 == 0",
+      solution: 'Algoritmo EsPar\n\tDefinir n Como Entero\n\tEscribir "Número:"\n\tLeer n\n\tEscribir n MOD 2 == 0\nFinAlgoritmo' },
   ]
 });

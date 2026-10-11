@@ -373,16 +373,16 @@
     const trans = TABLE(["Concepto", "Pseudocódigo", "JavaScript"], [
       ["Mostrar", "<code>Escribir \"Hola\"</code>", "<code>console.log(\"Hola\")</code>"],
       ["Leer dato", "<code>Leer x</code>", "<code>const x = prompt()</code>"],
-      ["Variable", "<code>x &lt;- 5</code>", "<code>let x = 5;</code>"],
-      ["Comparar", "<code>=</code> <code>&lt;&gt;</code>", "<code>===</code> <code>!==</code>"],
+      ["Variable", "<code>x = 5</code>", "<code>let x = 5;</code>"],
+      ["Comparar", "<code>==</code> <code>&lt;&gt;</code>", "<code>===</code> <code>!==</code>"],
       ["Lógicos", "<code>Y O NO</code>", "<code>&amp;&amp; || !</code>"],
       ["Resto", "<code>MOD</code>", "<code>%</code>"],
       ["Si", "<code>Si c Entonces … SiNo … FinSi</code>", "<code>if (c) { … } else { … }</code>"],
       ["Mientras", "<code>Mientras c Hacer … FinMientras</code>", "<code>while (c) { … }</code>"],
-      ["Para", "<code>Para i &lt;- 0 Hasta 9 Hacer</code>", "<code>for (let i = 0; i &lt;= 9; i++)</code>"],
+      ["Para", "<code>Para i = 0 Hasta 9 Hacer</code>", "<code>for (let i = 0; i &lt;= 9; i++)</code>"],
       ["Arreglo", "<code>Dimension v[5]</code>", "<code>const v = [];</code>"],
       ["Largo", "<code>Longitud(t)</code>", "<code>t.length</code>"],
-      ["Función", "<code>Funcion r &lt;- F(a) … FinFuncion</code>", "<code>function f(a) { return …; }</code>"],
+      ["Función", "<code>Funcion r = F(a) … FinFuncion</code>", "<code>function f(a) { return …; }</code>"],
     ]);
     return `<div class="stack">
       <div><div class="eyebrow">Para repasar</div><h1 class="page-title">Machetes</h1><p class="lead">Lo esencial de cada clase en una sola vista. Ideal para repasar antes de un examen o cuando no recuerdas cómo se escribía algo.</p></div>
@@ -573,7 +573,7 @@
   const TUTOR_RULES = "Eres el tutor de una app para aprender a programar desde cero, en español. La persona no tiene experiencia previa. Responde en español neutro, con frases cortas y claras, tuteando. Explica cualquier término técnico la primera vez que lo uses. Sé cálido y alentador, pero preciso. Máximo 220 palabras.";
   function tutorLessonHTML(id) {
     return `<section class="sec tutor-wrap" id="sec-tutor" ${sampleFn ? "" : "hidden"}><h2><span class="n">?</span>¿Te quedó una duda?</h2>
-      <div class="card tutor"><label class="small muted" for="lesson-q">Pregúntale al tutor sobre esta lección. Por ejemplo: «no entiendo la diferencia entre &lt;- y =».</label>
+      <div class="card tutor"><label class="small muted" for="lesson-q">Pregúntale al tutor sobre esta lección. Por ejemplo: «no entiendo la diferencia entre = y ==».</label>
       <textarea id="lesson-q" placeholder="Escribe tu pregunta…"></textarea>
       <div class="row"><button class="btn primary" data-act="ask-lesson" data-id="${id}">Preguntar</button><button class="btn" id="lesson-stop" hidden>Detener</button></div>
       <div class="answer" id="lesson-answer" hidden></div></div></section>`;
@@ -586,11 +586,11 @@
       { name: "Hola mundo", code: 'Algoritmo HolaMundo\n\tEscribir "Hola, mundo"\nFinAlgoritmo' },
       { name: "Leer y mostrar", code: 'Algoritmo Saludo\n\tDefinir nombre Como Cadena\n\tEscribir "¿Cómo te llamas?"\n\tLeer nombre\n\tEscribir "Hola, ", nombre\nFinAlgoritmo' },
       { name: "Si / SiNo", code: 'Algoritmo Decision\n\tDefinir n Como Entero\n\tLeer n\n\tSi n > 0 Entonces\n\t\tEscribir "Positivo"\n\tSiNo\n\t\tEscribir "Cero o negativo"\n\tFinSi\nFinAlgoritmo' },
-      { name: "Bucle Para", code: 'Algoritmo Contar\n\tPara i <- 1 Hasta 10 Hacer\n\t\tEscribir i\n\tFinPara\nFinAlgoritmo' },
-      { name: "Bucle Mientras", code: 'Algoritmo Mientras\n\ti <- 1\n\tMientras i <= 5 Hacer\n\t\tEscribir i\n\t\ti <- i + 1\n\tFinMientras\nFinAlgoritmo' },
-      { name: "Arreglo", code: 'Algoritmo Arreglo\n\tDimension v[5]\n\tPara i <- 0 Hasta 4 Hacer\n\t\tv[i] <- i * 10\n\tFinPara\n\tEscribir v\nFinAlgoritmo' },
-      { name: "Función", code: 'Funcion r <- Doble(n)\n\tr <- n * 2\nFinFuncion\n\nAlgoritmo UsarFuncion\n\tEscribir Doble(21)\nFinAlgoritmo' },
-      { name: "Juego: adivina el número", code: 'Algoritmo Adivina\n\tsecreto <- aleatorio(1, 100)\n\tintentos <- 0\n\tRepetir\n\t\tEscribir "Adivina (1-100):"\n\t\tLeer n\n\t\tintentos <- intentos + 1\n\t\tSi n < secreto Entonces\n\t\t\tEscribir "Más alto"\n\t\tSiNo\n\t\t\tSi n > secreto Entonces\n\t\t\t\tEscribir "Más bajo"\n\t\t\tFinSi\n\t\tFinSi\n\tHasta Que n = secreto\n\tEscribir "¡Lo lograste en ", intentos, " intentos!"\nFinAlgoritmo' },
+      { name: "Bucle Para", code: 'Algoritmo Contar\n\tPara i = 1 Hasta 10 Hacer\n\t\tEscribir i\n\tFinPara\nFinAlgoritmo' },
+      { name: "Bucle Mientras", code: 'Algoritmo Mientras\n\ti = 1\n\tMientras i <= 5 Hacer\n\t\tEscribir i\n\t\ti = i + 1\n\tFinMientras\nFinAlgoritmo' },
+      { name: "Arreglo", code: 'Algoritmo Arreglo\n\tDimension v[5]\n\tPara i = 0 Hasta 4 Hacer\n\t\tv[i] = i * 10\n\tFinPara\n\tEscribir v\nFinAlgoritmo' },
+      { name: "Función", code: 'Funcion r = Doble(n)\n\tr = n * 2\nFinFuncion\n\nAlgoritmo UsarFuncion\n\tEscribir Doble(21)\nFinAlgoritmo' },
+      { name: "Juego: adivina el número", code: 'Algoritmo Adivina\n\tsecreto = aleatorio(1, 100)\n\tintentos = 0\n\tRepetir\n\t\tEscribir "Adivina (1-100):"\n\t\tLeer n\n\t\tintentos = intentos + 1\n\t\tSi n < secreto Entonces\n\t\t\tEscribir "Más alto"\n\t\tSiNo\n\t\t\tSi n > secreto Entonces\n\t\t\t\tEscribir "Más bajo"\n\t\t\tFinSi\n\t\tFinSi\n\tHasta Que n == secreto\n\tEscribir "¡Lo lograste en ", intentos, " intentos!"\nFinAlgoritmo' },
     ],
     js: [
       { name: "Hola mundo", code: 'console.log("Hola, mundo");' },
@@ -603,14 +603,14 @@
     ],
   };
   const KEYS = {
-    pseudo: ["<-", '"', "(", ")", "[", "]", ",", "=", "<>", "<", ">", "+", "-", "*", "/", ":"],
+    pseudo: ["=", "==", '"', "(", ")", "[", "]", ",", "<>", "<", ">", "+", "-", "*", "/", ":"],
     js: ["{", "}", "(", ")", "[", "]", ";", "=", "===", "=>", "`", "${}", '"', "+", "<", ">", "&&", "||", "!"],
   };
   const SNIPS = {
     pseudo: [
       ["Escribir", 'Escribir ""', -1], ["Leer", "Leer ", 0], ["Definir", "Definir  Como Entero", -12],
       ["Si", "Si  Entonces\n\t\nFinSi", -15], ["SiNo", "SiNo\n\t", 0], ["Mientras", "Mientras  Hacer\n\t\nFinMientras", -20],
-      ["Para", "Para i <- 1 Hasta 10 Hacer\n\t\nFinPara", -8], ["Repetir", "Repetir\n\t\nHasta Que ", 0],
+      ["Para", "Para i = 1 Hasta 10 Hacer\n\t\nFinPara", -8], ["Repetir", "Repetir\n\t\nHasta Que ", 0],
     ],
     js: [
       ["log", "console.log();", -2], ["let", "let  = ;", -5], ["if", "if () {\n  \n}", -7], ["else", " else {\n  \n}", -2],
@@ -946,7 +946,7 @@
     },
     tutorPrompt(question) {
       const ex = this.ex;
-      const lang = this.lang === "js" ? "JavaScript" : "pseudocódigo en español estilo PSeInt (asignación con <-, arreglos con índice base 0, bloques Si/FinSi, Mientras/FinMientras, Para/FinPara)";
+      const lang = this.lang === "js" ? "JavaScript" : "pseudocódigo en español estilo PSeInt (asignación con =, comparación de igualdad con ==, arreglos con índice base 0, bloques Si/FinSi, Mientras/FinMientras, Para/FinPara)";
       return TUTOR_RULES + "\n\nLa persona está en el Laboratorio escribiendo " + lang + "." +
         (ex ? "\n\nEstá resolviendo este reto:\nTítulo: " + ex.title + "\nEnunciado: " + ex.text.replace(/<[^>]+>/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">") + "\nIMPORTANTE: no escribas la solución completa del reto. Explica qué falla o qué falta y da una pista concreta para el siguiente paso." : "") +
         "\n\nSu código:\n```\n" + this.getCode().slice(0, 6000) + "\n```" +
@@ -1088,7 +1088,7 @@
       if (!q) { toast("Escribe tu pregunta primero"); $("#lesson-q").focus(); return; }
       const l = LESSONS[b.dataset.id];
       const ctx = l.sections.map((s) => "- " + s.h + ": " + s.body.replace(/<div class="code"[^>]*><\/div>/g, " [ejemplo de código] ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 500)).join("\n");
-      const prompt = TUTOR_RULES + "\n\nLa persona está leyendo la lección «" + l.title + "» (" + l.summary + ")." + (l.lang === "js" ? " El lenguaje es JavaScript." : " Se usa pseudocódigo en español estilo PSeInt (asignación con <-, arreglos con índice base 0).") + "\nContenido de la lección, resumido:\n" + ctx + "\n\nSu pregunta: " + q + "\n\nResponde la pregunta con un ejemplo pequeño si ayuda.";
+      const prompt = TUTOR_RULES + "\n\nLa persona está leyendo la lección «" + l.title + "» (" + l.summary + ")." + (l.lang === "js" ? " El lenguaje es JavaScript." : " Se usa pseudocódigo en español estilo PSeInt (asignación con =, comparación de igualdad con ==, arreglos con índice base 0).") + "\nContenido de la lección, resumido:\n" + ctx + "\n\nSu pregunta: " + q + "\n\nResponde la pregunta con un ejemplo pequeño si ayuda.";
       askTutor(prompt, $("#lesson-answer"), b, $("#lesson-stop"));
     },
   };

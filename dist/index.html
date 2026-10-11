@@ -334,6 +334,8 @@ pre.mini { font-family: var(--f-mono); background: var(--code-bg); color: var(--
 .brand-name { overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 520px) { .topbar .sync { display: none; } }
 .sync-inline { font-size: 13px; color: var(--muted); }
+/* Sin ligaduras: ==, <=, >= y <> se ven tal cual se escriben */
+code, pre, textarea, .key, .fill, .console, .gutter { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
 
 </style>
 <header class="topbar">
@@ -661,7 +663,7 @@ pre.mini { font-family: var(--f-mono); background: var(--code-bg); color: var(--
           case "para": {
             next();
             const v = ident("para la variable del Para");
-            if (!isOP("<-") && !isOP("=")) throw new PseError("En el Para escribe  variable <- inicio Hasta fin", peek().line);
+            if (!isOP("<-") && !isOP("=")) throw new PseError("En el Para escribe  variable = inicio Hasta fin, por ejemplo  Para i = 1 Hasta 10 Hacer", peek().line);
             next();
             const from = expr();
             expectKW("hasta", "en el Para");
@@ -719,8 +721,8 @@ pre.mini { font-family: var(--f-mono); background: var(--code-bg); color: var(--
           endLine();
           return { k: "assign", target, e, line };
         }
-        if (peek().type === "NL") throw new PseError("La instrucción '" + tk.raw + "' está incompleta. Para guardar un valor usa  " + tk.raw + " <- valor", line);
-        throw new PseError("Esperaba '<-' para asignar un valor a '" + tk.raw + "' pero encontré " + show(peek()), peek().line);
+        if (peek().type === "NL") throw new PseError("La instrucción '" + tk.raw + "' está incompleta. Para guardar un valor usa  " + tk.raw + " = valor", line);
+        throw new PseError("Esperaba '=' para asignar un valor a '" + tk.raw + "' pero encontré " + show(peek()), peek().line);
       }
       throw new PseError("No esperaba " + show(tk) + " al inicio de una instrucción", line);
     }
@@ -756,6 +758,7 @@ pre.mini { font-family: var(--f-mono); background: var(--code-bg); color: var(--
       let l = addE();
       while (peek().type === "OP" && ["=", "==", "<>", "!=", "<", ">", "<=", ">="].includes(peek().value)) {
         const op = next();
+        if (op.value === "=") throw new PseError("Para comparar si dos valores son iguales usa == (dos signos igual). Un solo = sirve para guardar un valor en una variable", op.line);
         let o = op.value; if (o === "==") o = "="; if (o === "!=") o = "<>";
         l = { k: "bin", op: o, l, r: addE(), line: op.line };
       }
@@ -910,7 +913,7 @@ pre.mini { font-family: var(--f-mono); background: var(--code-bg); color: var(--
           const cell = lookup(scope, e.name);
           if (!cell) {
             if (BUILTINS[strip(e.name)] && BUILTINS[strip(e.name)].length === 0) return BUILTINS[strip(e.name)]();
-            throw new PseError("La variable '" + e.raw + "' no existe todavía. Dale un valor antes de usarla (" + e.raw + " <- ...) o léela con Leer", e.line);
+            throw new PseError("La variable '" + e.raw + "' no existe todavía. Dale un valor antes de usarla (" + e.raw + " = ...) o léela con Leer", e.line);
           }
           if (cell.value === undefined) throw new PseError("La variable '" + e.raw + "' fue definida pero todavía no tiene valor", e.line);
           return cell.value;
@@ -968,7 +971,7 @@ pre.mini { font-family: var(--f-mono); background: var(--code-bg); color: var(--
         }
         case "=": case "<>": case "<": case ">": case "<=": case ">=": {
           if (typeof l !== typeof r) throw new PseError("No se puede comparar " + typeName(l) + " con " + typeName(r) + " (" + fmt(l) + " y " + fmt(r) + ")", line);
-          if (typeof l === "boolean" && !["=", "<>"].includes(op)) throw new PseError("Los valores lógicos solo se comparan con = o <>", line);
+          if (typeof l === "boolean" && !["=", "<>"].includes(op)) throw new PseError("Los valores lógicos solo se comparan con == o <>", line);
           switch (op) {
             case "=": return l === r;
             case "<>": return l !== r;
@@ -1130,7 +1133,7 @@ pre.mini { font-family: var(--f-mono); background: var(--code-bg); color: var(--
         }
         case "if": {
           const c = await getVal(s.cond, scope);
-          if (typeof c !== "boolean") throw new PseError("La condición del Si debe ser VERDADERO o FALSO, pero dio " + fmt(c) + ". ¿Usaste <- en lugar de = para comparar?", s.line);
+          if (typeof c !== "boolean") throw new PseError("La condición del Si debe ser VERDADERO o FALSO, pero dio " + fmt(c) + ". Una condición necesita una comparación, por ejemplo  x == 5  o  x > 3", s.line);
           if (c) return execBlock(s.then, scope);
           if (s.els) return execBlock(s.els, scope);
           return null;
@@ -1431,15 +1434,15 @@ MOD({
   lessons: ["l01", "l02", "l03", "l04"],
   exam: {
     extra: [
-      { q: "¿Qué valor tiene <code>x</code> al final?", code: "x <- 4\nx <- x * 2\nx <- x - 3", opts: ["4", "5", "8", "-3"], a: 1, why: "Se ejecuta en orden: x=4, luego 4*2=8, luego 8-3=5." },
+      { q: "¿Qué valor tiene <code>x</code> al final?", code: "x = 4\nx = x * 2\nx = x - 3", opts: ["4", "5", "8", "-3"], a: 1, why: "Se ejecuta en orden: x=4, luego 4*2=8, luego 8-3=5." },
       { q: "¿Qué tipo de dato usarías para guardar el precio de un producto, por ejemplo 19.99?", opts: ["Entero", "Real", "Cadena", "Logico"], a: 1, why: "Tiene decimales, así que es Real." },
       { q: "¿Cuál es el resultado de <code>17 MOD 5</code>?", opts: ["3", "2", "3.4", "12"], a: 1, why: "17 dividido 5 da 3 y sobran 2. MOD devuelve lo que sobra: 2." },
-      { q: "¿Qué muestra este programa?", code: 'a <- "3"\nb <- "4"\nEscribir a + b', opts: ["7", "34", "a+b", "Error"], a: 1, why: "Son textos (están entre comillas). Sumar textos los une: \"3\" + \"4\" = \"34\"." },
+      { q: "¿Qué muestra este programa?", code: 'a = "3"\nb = "4"\nEscribir a + b', opts: ["7", "34", "a+b", "Error"], a: 1, why: "Son textos (están entre comillas). Sumar textos los une: \"3\" + \"4\" = \"34\"." },
       { q: "¿Cuánto vale <code>2 + 3 * 4</code>?", opts: ["20", "14", "24", "9"], a: 1, why: "Primero la multiplicación: 3*4=12, luego 2+12=14." },
       { q: "¿Qué da <code>(5 > 3) Y (2 > 8)</code>?", opts: ["VERDADERO", "FALSO", "Error", "5"], a: 1, why: "Con Y ambas partes deben ser verdaderas. 2 > 8 es falso, así que todo es FALSO." },
       { q: "Un algoritmo debe ser...", opts: ["Largo y detallado", "Preciso, ordenado y finito", "Escrito en inglés", "Ejecutado solo por computadoras"], a: 1, why: "Un algoritmo es una secuencia de pasos precisos, en orden, que termina." },
-      { q: "¿Qué instrucción guarda en la variable <code>edad</code> lo que escribe la persona usuaria?", opts: ["Escribir edad", "edad <- Leer", "Leer edad", "Definir edad"], a: 2, why: "Leer espera a que la persona escriba algo y lo guarda en la variable indicada." },
-      { fill: true, q: "Completa: para asignar el valor 10 a la variable <code>puntos</code> se escribe <code>puntos ___ 10</code>", a: ["<-", "←"], why: "La flecha <- significa \"recibe\": puntos recibe 10." },
+      { q: "¿Qué instrucción guarda en la variable <code>edad</code> lo que escribe la persona usuaria?", opts: ["Escribir edad", "edad = Leer", "Leer edad", "Definir edad"], a: 2, why: "Leer espera a que la persona escriba algo y lo guarda en la variable indicada." },
+      { fill: true, q: "Completa: para asignar el valor 10 a la variable <code>puntos</code> se escribe <code>puntos ___ 10</code>", a: ["="], why: "Un solo = significa \"guarda\": puntos recibe el valor 10." },
       { q: "¿Cuál de estos nombres de variable es válido?", opts: ["2numero", "mi nombre", "total_ventas", "Si"], a: 2, why: "No puede empezar con número, ni tener espacios, ni ser palabra reservada como Si." },
     ],
     challenge: {
@@ -1449,7 +1452,7 @@ MOD({
       starter: 'Algoritmo Propina\n\tDefinir cuenta, propina Como Real\n\tDefinir porcentaje Como Entero\n\tEscribir "Total de la cuenta:"\n\tLeer cuenta\n\t// Completa aquí\n\nFinAlgoritmo',
       tests: [{ in: ["100", "10"], out: "Total a pagar: 110" }, { in: ["80", "15"], out: "Total a pagar: 92" }, { in: ["45.5", "20"], out: "Total a pagar: 54.6" }],
       hint: "La propina es cuenta * porcentaje / 100. Luego suma la cuenta y la propina.",
-      solution: 'Algoritmo Propina\n\tDefinir cuenta, propina Como Real\n\tDefinir porcentaje Como Entero\n\tEscribir "Total de la cuenta:"\n\tLeer cuenta\n\tEscribir "Porcentaje de propina:"\n\tLeer porcentaje\n\tpropina <- cuenta * porcentaje / 100\n\tEscribir "Propina: ", propina\n\tEscribir "Total a pagar: ", cuenta + propina\nFinAlgoritmo'
+      solution: 'Algoritmo Propina\n\tDefinir cuenta, propina Como Real\n\tDefinir porcentaje Como Entero\n\tEscribir "Total de la cuenta:"\n\tLeer cuenta\n\tEscribir "Porcentaje de propina:"\n\tLeer porcentaje\n\tpropina = cuenta * porcentaje / 100\n\tEscribir "Propina: ", propina\n\tEscribir "Total a pagar: ", cuenta + propina\nFinAlgoritmo'
     }
   }
 });
@@ -1552,30 +1555,31 @@ L({
     { h: "Una variable es una caja con nombre", body: `
 <p>Los programas necesitan <b>recordar</b> datos: el nombre de alguien, un precio, cuántos puntos lleva un jugador. Para eso usamos <b>variables</b>.</p>
 ${IDEA("Una variable es como una caja con una etiqueta. La etiqueta es el <b>nombre</b> (por ejemplo <code>edad</code>) y dentro guardas un <b>valor</b> (por ejemplo <code>25</code>). Puedes mirar qué hay dentro o reemplazarlo por otra cosa, pero la caja solo guarda un valor a la vez.")}
-<p>Para guardar un valor en una variable usamos la flecha <code>&lt;-</code>, que se lee <b>«recibe»</b>:</p>
+<p>Para guardar un valor en una variable usamos el signo <code>=</code>, que aquí se lee <b>«recibe»</b> o <b>«guarda»</b>:</p>
 ${C(`Algoritmo Variables
-	edad <- 25
-	nombre <- "Ada"
+	edad = 25
+	nombre = "Ada"
 	Escribir nombre
 	Escribir edad
 FinAlgoritmo`)}
-<p><code>edad &lt;- 25</code> se lee «edad recibe 25». Esta operación se llama <b>asignación</b>.</p>
+<p><code>edad = 25</code> se lee «edad recibe 25». Esta operación se llama <b>asignación</b>.</p>
+${WARN("En matemáticas <code>=</code> significa «es igual a». En programación, un solo <code>=</code> significa <b>guardar un valor</b>. Para <b>preguntar</b> si dos valores son iguales se usan dos: <code>==</code>. Lo verás en la lección 4.")}
 ${TIP("Fíjate en la diferencia: <code>Escribir nombre</code> muestra el <i>contenido</i> de la variable (Ada). <code>Escribir \"nombre\"</code> muestra literalmente la palabra nombre.")}` },
     { h: "El valor puede cambiar", body: `
 <p>Por eso se llama <i>variable</i>. Cuando asignas un valor nuevo, el anterior <b>se pierde</b>:</p>
 ${C(`Algoritmo Cambia
-	puntos <- 10
+	puntos = 10
 	Escribir puntos
-	puntos <- 50
+	puntos = 50
 	Escribir puntos
 FinAlgoritmo`)}
 <p>Algo muy común es calcular el nuevo valor <b>a partir del anterior</b>. Mira esto:</p>
 ${C(`Algoritmo Incrementar
-	vidas <- 3
-	vidas <- vidas + 1
+	vidas = 3
+	vidas = vidas + 1
 	Escribir vidas
 FinAlgoritmo`)}
-<p><code>vidas &lt;- vidas + 1</code> no es una ecuación matemática. Se ejecuta así: <b>primero</b> se calcula el lado derecho (3 + 1 = 4) y <b>después</b> ese resultado se guarda en <code>vidas</code>. Regla de oro: <b>la derecha se calcula primero, luego se guarda a la izquierda</b>.</p>` },
+<p><code>vidas = vidas + 1</code> no es una ecuación matemática. Se ejecuta así: <b>primero</b> se calcula el lado derecho (3 + 1 = 4) y <b>después</b> ese resultado se guarda en <code>vidas</code>. Regla de oro: <b>la derecha se calcula primero, luego se guarda a la izquierda</b>.</p>` },
     { h: "Tipos de datos", body: `
 <p>No todos los datos son iguales. No es lo mismo un número que un texto. Estos son los tipos básicos:</p>
 ${TABLE(["Tipo", "Qué guarda", "Ejemplos"], [["<b>Entero</b>", "Números sin decimales", "<code>7</code>, <code>-3</code>, <code>2026</code>"], ["<b>Real</b>", "Números con decimales", "<code>3.14</code>, <code>-0.5</code>, <code>19.99</code>"], ["<b>Cadena</b>", "Texto (siempre entre comillas)", "<code>\"Hola\"</code>, <code>\"Ana\"</code>, <code>\"123\"</code>"], ["<b>Logico</b>", "Solo dos valores: verdadero o falso", "<code>Verdadero</code>, <code>Falso</code>"]])}
@@ -1586,10 +1590,10 @@ ${C(`Algoritmo Tipos
 	Definir nombre Como Cadena
 	Definir esEstudiante Como Logico
 
-	edad <- 30
-	altura <- 1.68
-	nombre <- "Grace"
-	esEstudiante <- Verdadero
+	edad = 30
+	altura = 1.68
+	nombre = "Grace"
+	esEstudiante = Verdadero
 
 	Escribir nombre, " tiene ", edad, " años"
 	Escribir "¿Estudia? ", esEstudiante
@@ -1597,7 +1601,7 @@ FinAlgoritmo`)}
 <p>¿Por qué definir? Porque así la computadora te avisa si te equivocas. Prueba esto:</p>
 ${C(`Algoritmo TipoIncorrecto
 	Definir edad Como Entero
-	edad <- "treinta"
+	edad = "treinta"
 FinAlgoritmo`)}
 ${WARN("<code>\"123\"</code> (con comillas) es un texto, no un número. No puedes hacer cuentas con él. <code>123</code> (sin comillas) sí es un número.")}
 ${PRO("En lenguajes como Java, C# o TypeScript es obligatorio indicar el tipo. En JavaScript o Python no, pero los tipos siguen existiendo y causan muchos errores si no los entiendes. Por eso aprenderlos ahora es tan valioso.")}` },
@@ -1610,19 +1614,19 @@ ${TABLE(["Nombre", "¿Válido?", "Por qué"], [["<code>nombre</code>", "✔", "C
     { h: "Prueba de escritorio", body: `
 <p>Una <b>prueba de escritorio</b> es seguir un programa a mano, paso a paso, anotando cuánto vale cada variable. Es la mejor forma de entender qué hace un código. Hagámosla con este:</p>
 ${C(`Algoritmo Prueba
-	a <- 5
-	b <- 3
-	a <- a + b
-	b <- a - b
+	a = 5
+	b = 3
+	a = a + b
+	b = a - b
 	Escribir a, " ", b
 FinAlgoritmo`)}
-${TABLE(["Línea", "a", "b"], [["a <- 5", "5", "—"], ["b <- 3", "5", "3"], ["a <- a + b", "8", "3"], ["b <- a - b", "8", "5"]])}
+${TABLE(["Línea", "a", "b"], [["a = 5", "5", "—"], ["b = 3", "5", "3"], ["a = a + b", "8", "3"], ["b = a - b", "8", "5"]])}
 <p>Resultado: muestra <code>8 5</code>. En el Laboratorio tienes el botón <b>Paso a paso</b>, que hace esta tabla automáticamente: ejecuta una línea por vez y te muestra el valor de cada variable.</p>
 ${TIP("Cuando un programa no hace lo que esperas, haz una prueba de escritorio. En el 90% de los casos encontrarás el error.")}` },
   ],
   cheat: [
-    { h: "Asignar (guardar un valor)", body: CN(`variable <- valor
-contador <- contador + 1   // derecha primero, luego guarda`) },
+    { h: "Asignar (guardar un valor)", body: CN(`variable = valor
+contador = contador + 1   // derecha primero, luego guarda`) },
     { h: "Definir tipos", body: CN(`Definir edad Como Entero
 Definir precio Como Real
 Definir nombre Como Cadena
@@ -1631,27 +1635,27 @@ Definir activo Como Logico`) },
     { h: "Nombres", body: `<ul><li>Empiezan con letra, sin espacios, sin palabras reservadas.</li><li>Descriptivos y en camelCase: <code>precioFinal</code>.</li></ul>` },
   ],
   quiz: [
-    { q: "¿Qué muestra este programa?", code: "x <- 7\nx <- 2\nEscribir x", opts: ["7", "2", "9", "72"], a: 1, why: "Al asignar 2, el valor 7 se pierde. Una variable guarda un solo valor." },
-    { q: "¿Qué valor tiene <code>total</code> al final?", code: "total <- 10\ntotal <- total + 5\ntotal <- total * 2", opts: ["10", "15", "30", "25"], a: 2, why: "10, luego 10+5=15, luego 15*2=30." },
+    { q: "¿Qué muestra este programa?", code: "x = 7\nx = 2\nEscribir x", opts: ["7", "2", "9", "72"], a: 1, why: "Al asignar 2, el valor 7 se pierde. Una variable guarda un solo valor." },
+    { q: "¿Qué valor tiene <code>total</code> al final?", code: "total = 10\ntotal = total + 5\ntotal = total * 2", opts: ["10", "15", "30", "25"], a: 2, why: "10, luego 10+5=15, luego 15*2=30." },
     { q: "¿Qué tipo de dato es <code>\"2026\"</code>?", opts: ["Entero", "Real", "Cadena", "Logico"], a: 2, why: "Está entre comillas, así que es texto (Cadena), aunque contenga dígitos." },
     { q: "¿Qué tipo usarías para guardar si una persona aceptó los términos y condiciones?", opts: ["Entero", "Cadena", "Logico", "Real"], a: 2, why: "Solo hay dos posibilidades (aceptó o no): Logico." },
     { q: "¿Cuál es un buen nombre de variable para la cantidad de alumnos?", opts: ["c", "cantidad alumnos", "cantidadAlumnos", "3alumnos"], a: 2, why: "Es descriptivo, no tiene espacios y no empieza con número." },
-    { q: "Después de ejecutar esto, ¿cuánto valen a y b?", code: "a <- 1\nb <- a\na <- 9", opts: ["a=9, b=9", "a=9, b=1", "a=1, b=1", "a=1, b=9"], a: 1, why: "b recibió una copia del valor de a (1) en ese momento. Cambiar a después no afecta a b." },
-    { fill: true, q: "¿Qué muestra?", code: 'nombre <- "Lin"\nEscribir "nombre"', a: ["nombre"], why: "Entre comillas es un texto literal. Para mostrar el contenido se escribe sin comillas." },
+    { q: "Después de ejecutar esto, ¿cuánto valen a y b?", code: "a = 1\nb = a\na = 9", opts: ["a=9, b=9", "a=9, b=1", "a=1, b=1", "a=1, b=9"], a: 1, why: "b recibió una copia del valor de a (1) en ese momento. Cambiar a después no afecta a b." },
+    { fill: true, q: "¿Qué muestra?", code: 'nombre = "Lin"\nEscribir "nombre"', a: ["nombre"], why: "Entre comillas es un texto literal. Para mostrar el contenido se escribe sin comillas." },
   ],
   exercises: [
     { id: "ex02a", title: "Área de un rectángulo", lang: "pseudo",
       text: "Guarda en variables la base (8) y la altura (5) de un rectángulo. Calcula el área en otra variable y muéstrala así:<br><code>Área: 40</code>",
       starter: "Algoritmo Area\n\tDefinir base, altura, area Como Entero\n\t\nFinAlgoritmo",
       tests: [{ in: [], out: "Área: 40" }],
-      hint: "area <- base * altura. Para mostrar texto y variable juntos: Escribir \"Área: \", area",
-      solution: 'Algoritmo Area\n\tDefinir base, altura, area Como Entero\n\tbase <- 8\n\taltura <- 5\n\tarea <- base * altura\n\tEscribir "Área: ", area\nFinAlgoritmo' },
+      hint: "area = base * altura. Para mostrar texto y variable juntos: Escribir \"Área: \", area",
+      solution: 'Algoritmo Area\n\tDefinir base, altura, area Como Entero\n\tbase = 8\n\taltura = 5\n\tarea = base * altura\n\tEscribir "Área: ", area\nFinAlgoritmo' },
     { id: "ex02b", title: "Intercambiar valores", lang: "pseudo",
-      text: "Tienes <code>a &lt;- 5</code> y <code>b &lt;- 8</code>. Intercambia sus valores (que a valga 8 y b valga 5) <b>sin escribir los números 5 u 8 de nuevo</b>. Al final muestra:<br><code>a=8 b=5</code>",
-      starter: 'Algoritmo Intercambio\n\ta <- 5\n\tb <- 8\n\t// Intercambia aquí\n\n\tEscribir "a=", a, " b=", b\nFinAlgoritmo',
+      text: "Tienes <code>a = 5</code> y <code>b = 8</code>. Intercambia sus valores (que a valga 8 y b valga 5) <b>sin escribir los números 5 u 8 de nuevo</b>. Al final muestra:<br><code>a=8 b=5</code>",
+      starter: 'Algoritmo Intercambio\n\ta = 5\n\tb = 8\n\t// Intercambia aquí\n\n\tEscribir "a=", a, " b=", b\nFinAlgoritmo',
       tests: [{ in: [], out: "a=8 b=5" }],
       hint: "Usa una tercera variable auxiliar como «vaso vacío»: guarda a en aux, luego pon b en a, y por último aux en b.",
-      solution: 'Algoritmo Intercambio\n\ta <- 5\n\tb <- 8\n\taux <- a\n\ta <- b\n\tb <- aux\n\tEscribir "a=", a, " b=", b\nFinAlgoritmo' },
+      solution: 'Algoritmo Intercambio\n\ta = 5\n\tb = 8\n\taux = a\n\ta = b\n\tb = aux\n\tEscribir "a=", a, " b=", b\nFinAlgoritmo' },
   ]
 });
 
@@ -1672,8 +1676,8 @@ ${TIP("Siempre muestra un mensaje antes de Leer para que la persona sepa qué ti
     { h: "Escribir: mostrar varias cosas", body: `
 <p>Con <code>Escribir</code> puedes mostrar varias cosas separadas por comas. Se muestran pegadas, así que tú controlas los espacios:</p>
 ${C(`Algoritmo Mostrar
-	precio <- 250
-	cantidad <- 3
+	precio = 250
+	cantidad = 3
 	Escribir "Precio: ", precio
 	Escribir "Llevas ", cantidad, " unidades"
 	Escribir "Total: ", precio * cantidad
@@ -1701,9 +1705,9 @@ FinAlgoritmo`)}
 <p>Con <code>+</code> entre textos los <b>unes</b> (esto se llama <b>concatenar</b>):</p>
 ${C(`Algoritmo Concatenar
 	Definir nombre, apellido, completo Como Cadena
-	nombre <- "Alan"
-	apellido <- "Turing"
-	completo <- nombre + " " + apellido
+	nombre = "Alan"
+	apellido = "Turing"
+	completo = nombre + " " + apellido
 	Escribir completo
 FinAlgoritmo`)}
 ${WARN("<code>\"5\" + \"5\"</code> da <code>\"55\"</code> (une textos), mientras que <code>5 + 5</code> da <code>10</code>. Este error es clásico en JavaScript cuando los datos vienen de un formulario: siempre llegan como texto.")}` },
@@ -1721,7 +1725,7 @@ ${C(`Algoritmo Edad2030
 	Leer edad
 
 	// Proceso
-	edadFutura <- edad + (2030 - 2026)
+	edadFutura = edad + (2030 - 2026)
 
 	// Salida
 	Escribir nombre, ", en 2030 tendrás ", edadFutura, " años"
@@ -1733,13 +1737,13 @@ ${PRO("Separar el código en bloques con comentarios (entrada / proceso / salida
 Leer edad`) },
     { h: "Mostrar varias cosas", body: CN(`Escribir "Total: ", total, " pesos"
 Escribir Sin Saltar "misma línea"`) },
-    { h: "Unir textos", body: CN(`completo <- nombre + " " + apellido`) },
+    { h: "Unir textos", body: CN(`completo = nombre + " " + apellido`) },
     { h: "Recuerda", body: `<ul><li>Mensaje claro antes de cada <code>Leer</code>.</li><li><code>\"5\"+\"5\"</code> = <code>\"55\"</code>; <code>5+5</code> = <code>10</code>.</li><li>Esquema: entrada → proceso → salida.</li></ul>` },
   ],
   quiz: [
     { q: "¿Qué hace <code>Leer precio</code>?", opts: ["Muestra el precio", "Espera que la persona escriba un valor y lo guarda en precio", "Borra la variable precio", "Define el tipo de precio"], a: 1, why: "Leer detiene el programa hasta que la persona escribe algo y lo guarda en la variable." },
-    { q: "¿Qué muestra?", code: 'a <- 4\nEscribir "a", a', opts: ["a4", "44", "a a", "4"], a: 0, why: "Primero el texto literal \"a\" y luego el valor de la variable a (4), pegados: a4." },
-    { q: "¿Qué muestra?", code: 'x <- "10"\ny <- "20"\nEscribir x + y', opts: ["30", "1020", "x+y", "Error"], a: 1, why: "Son textos: + los concatena." },
+    { q: "¿Qué muestra?", code: 'a = 4\nEscribir "a", a', opts: ["a4", "44", "a a", "4"], a: 0, why: "Primero el texto literal \"a\" y luego el valor de la variable a (4), pegados: a4." },
+    { q: "¿Qué muestra?", code: 'a = "10"\nb = "20"\nEscribir a + b', opts: ["30", "1020", "a+b", "Error"], a: 1, why: "Son textos: + los concatena." },
     { q: "Si escribes <i>hola</i> cuando el programa hace <code>Leer n</code> y <code>n</code> es Entero...", opts: ["n vale 0", "n vale \"hola\"", "Da un error porque se esperaba un número", "Se ignora"], a: 2, why: "La variable es Entero y \"hola\" no es un número: el programa avisa del error." },
     { q: "¿Cuál es la mejor forma de pedir la edad?", opts: ["Leer edad", "Escribir \"Edad:\" y luego Leer edad", "Escribir edad", "Leer \"edad\""], a: 1, why: "Siempre conviene avisar qué dato se espera antes de leerlo." },
     { q: "¿Qué muestra?", code: 'Escribir Sin Saltar "Ho"\nEscribir "la"', opts: ["Ho la (en dos líneas)", "Hola", "Ho la", "Error"], a: 1, why: "Sin Saltar no hace salto de línea, así que \"la\" se escribe a continuación." },
@@ -1761,8 +1765,8 @@ Escribir Sin Saltar "misma línea"`) },
       text: "Pide nombre y apellido por separado. Guarda en una variable <code>completo</code> el apellido, una coma, un espacio y el nombre, y muéstrala. Ejemplo: con <i>Ada</i> y <i>Lovelace</i> la última línea es <code>Lovelace, Ada</code>",
       starter: "Algoritmo NombreCompleto\n\tDefinir nombre, apellido, completo Como Cadena\n\t\nFinAlgoritmo",
       tests: [{ in: ["Ada", "Lovelace"], out: "Lovelace, Ada" }, { in: ["Alan", "Turing"], out: "Turing, Alan" }],
-      hint: "completo <- apellido + \", \" + nombre",
-      solution: 'Algoritmo NombreCompleto\n\tDefinir nombre, apellido, completo Como Cadena\n\tEscribir "Nombre:"\n\tLeer nombre\n\tEscribir "Apellido:"\n\tLeer apellido\n\tcompleto <- apellido + ", " + nombre\n\tEscribir completo\nFinAlgoritmo' },
+      hint: "completo = apellido + \", \" + nombre",
+      solution: 'Algoritmo NombreCompleto\n\tDefinir nombre, apellido, completo Como Cadena\n\tEscribir "Nombre:"\n\tLeer nombre\n\tEscribir "Apellido:"\n\tLeer apellido\n\tcompleto = apellido + ", " + nombre\n\tEscribir completo\nFinAlgoritmo' },
   ]
 });
 
@@ -1781,14 +1785,14 @@ ${C(`Algoritmo Cuentas
 FinAlgoritmo`)}
 <p><code>trunc()</code> corta los decimales (división entera). Junto con <code>MOD</code> sirve para muchas cosas, como pasar segundos a minutos.</p>` },
     { h: "MOD: el resto, un operador muy útil", body: `
-<p><code>MOD</code> devuelve lo que <b>sobra</b> en una división. 17 entre 5 cabe 3 veces (15) y sobran 2, así que <code>17 MOD 5 = 2</code>.</p>
+<p><code>MOD</code> devuelve lo que <b>sobra</b> en una división. 17 entre 5 cabe 3 veces (15) y sobran 2, así que <code>17 MOD 5</code> da <code>2</code>.</p>
 <p>¿Para qué sirve? Para muchísimas cosas:</p>
-<ul><li><b>Saber si un número es par:</b> <code>n MOD 2 = 0</code>.</li><li><b>Saber si es divisible:</b> <code>n MOD 3 = 0</code> significa que n es múltiplo de 3.</li><li><b>Obtener el último dígito:</b> <code>1234 MOD 10 = 4</code>.</li><li><b>Convertir unidades:</b> 125 segundos son <code>trunc(125/60) = 2</code> minutos y <code>125 MOD 60 = 5</code> segundos.</li></ul>
+<ul><li><b>Saber si un número es par:</b> <code>n MOD 2 == 0</code>.</li><li><b>Saber si es divisible:</b> <code>n MOD 3 == 0</code> significa que n es múltiplo de 3.</li><li><b>Obtener el último dígito:</b> <code>1234 MOD 10</code> da <code>4</code>.</li><li><b>Convertir unidades:</b> 125 segundos son <code>trunc(125/60)</code> (2) minutos y <code>125 MOD 60</code> (5) segundos.</li></ul>
 ${C(`Algoritmo Tiempo
 	Definir total, minutos, segundos Como Entero
-	total <- 125
-	minutos <- trunc(total / 60)
-	segundos <- total MOD 60
+	total = 125
+	minutos = trunc(total / 60)
+	segundos = total MOD 60
 	Escribir total, " segundos son ", minutos, " min y ", segundos, " s"
 FinAlgoritmo`)}` },
     { h: "Orden de las operaciones", body: `
@@ -1804,22 +1808,22 @@ FinAlgoritmo`)}
 ${WARN("El error del promedio sin paréntesis es uno de los más comunes. Si dudas, usa paréntesis: nunca está mal ser explícito.")}` },
     { h: "Operadores de comparación", body: `
 <p>Comparan dos valores y el resultado es siempre un <b>valor lógico</b>: <code>VERDADERO</code> o <code>FALSO</code>.</p>
-${TABLE(["Operador", "Pregunta", "Ejemplo", "Resultado"], [["<code>=</code>", "¿Son iguales?", "<code>5 = 5</code>", "VERDADERO"], ["<code>&lt;&gt;</code>", "¿Son distintos?", "<code>5 &lt;&gt; 3</code>", "VERDADERO"], ["<code>&lt;</code>", "¿Menor que?", "<code>2 &lt; 1</code>", "FALSO"], ["<code>&gt;</code>", "¿Mayor que?", "<code>9 &gt; 4</code>", "VERDADERO"], ["<code>&lt;=</code>", "¿Menor o igual?", "<code>3 &lt;= 3</code>", "VERDADERO"], ["<code>&gt;=</code>", "¿Mayor o igual?", "<code>2 &gt;= 5</code>", "FALSO"]])}
+${TABLE(["Operador", "Pregunta", "Ejemplo", "Resultado"], [["<code>==</code>", "¿Son iguales?", "<code>5 == 5</code>", "VERDADERO"], ["<code>&lt;&gt;</code>", "¿Son distintos?", "<code>5 &lt;&gt; 3</code>", "VERDADERO"], ["<code>&lt;</code>", "¿Menor que?", "<code>2 &lt; 1</code>", "FALSO"], ["<code>&gt;</code>", "¿Mayor que?", "<code>9 &gt; 4</code>", "VERDADERO"], ["<code>&lt;=</code>", "¿Menor o igual?", "<code>3 &lt;= 3</code>", "VERDADERO"], ["<code>&gt;=</code>", "¿Mayor o igual?", "<code>2 &gt;= 5</code>", "FALSO"]])}
 ${C(`Algoritmo Comparar
-	edad <- 17
+	edad = 17
 	Escribir "¿Es mayor de edad? ", edad >= 18
-	Escribir "¿Es par? ", edad MOD 2 = 0
-	Escribir "¿Se llama Ana? ", "Ana" = "Ana"
+	Escribir "¿Es par? ", edad MOD 2 == 0
+	Escribir "¿Se llama Ana? ", "Ana" == "Ana"
 FinAlgoritmo`)}
-${TIP("No confundas <code>&lt;-</code> (asignar: guardar un valor) con <code>=</code> (comparar: preguntar si son iguales). En JavaScript serán <code>=</code> y <code>===</code>, y confundirlos es un error clásico.")}` },
+${TIP("No confundas <code>=</code> (asignar: guardar un valor) con <code>==</code> (comparar: preguntar si son iguales). Si escribes <code>Si edad = 18</code>, el programa te avisará que para comparar se usa <code>==</code>. En JavaScript es parecido: <code>=</code> guarda y <code>===</code> compara.")}` },
     { h: "Operadores lógicos: Y, O, NO", body: `
 <p>Sirven para combinar condiciones.</p>
 <ul><li><b>Y</b>: verdadero solo si <b>ambas</b> partes son verdaderas. «Puedes entrar si tienes entrada <b>y</b> eres mayor de edad».</li><li><b>O</b>: verdadero si <b>al menos una</b> es verdadera. «Hay descuento si eres estudiante <b>o</b> jubilado».</li><li><b>NO</b>: invierte el valor. <code>NO Verdadero</code> es <code>FALSO</code>.</li></ul>
 <p><b>Tablas de verdad</b> (V = verdadero, F = falso):</p>
 ${TABLE(["A", "B", "A Y B", "A O B", "NO A"], [["V", "V", "V", "V", "F"], ["V", "F", "F", "V", "F"], ["F", "V", "F", "V", "V"], ["F", "F", "F", "F", "V"]])}
 ${C(`Algoritmo Logicos
-	edad <- 25
-	tieneEntrada <- Verdadero
+	edad = 25
+	tieneEntrada = Verdadero
 	Escribir "¿Puede entrar? ", edad >= 18 Y tieneEntrada
 	Escribir "¿Edad entre 18 y 30? ", edad >= 18 Y edad <= 30
 	Escribir "¿Es niño o jubilado? ", edad < 12 O edad >= 65
@@ -1835,10 +1839,10 @@ FinAlgoritmo`)}` },
   ],
   cheat: [
     { h: "Aritméticos", body: TABLE(["Op", "Ejemplo", "="], [["+ - * /", "7 / 2", "3.5"], ["^", "2 ^ 3", "8"], ["MOD", "7 MOD 2", "1"], ["trunc()", "trunc(7/2)", "3"]]) },
-    { h: "Comparación (dan V/F)", body: `<code>=</code> igual · <code>&lt;&gt;</code> distinto · <code>&lt; &gt; &lt;= &gt;=</code>` },
+    { h: "Comparación (dan V/F)", body: `<code>==</code> igual · <code>&lt;&gt;</code> distinto · <code>&lt; &gt; &lt;= &gt;=</code>` },
     { h: "Lógicos", body: `<ul><li><b>Y</b>: las dos verdaderas.</li><li><b>O</b>: al menos una.</li><li><b>NO</b>: invierte.</li></ul>` },
     { h: "Orden", body: `<code>( )</code> → <code>^</code> → <code>* / MOD</code> → <code>+ -</code> → comparaciones → <code>NO</code> → <code>Y</code> → <code>O</code>` },
-    { h: "Trucos con MOD", body: CN(`n MOD 2 = 0      // ¿es par?
+    { h: "Trucos con MOD", body: CN(`n MOD 2 == 0      // ¿es par?
 n MOD 10         // último dígito
 trunc(s / 60)    // minutos
 s MOD 60         // segundos que sobran`) },
@@ -1846,7 +1850,7 @@ s MOD 60         // segundos que sobran`) },
   quiz: [
     { q: "¿Cuánto da <code>10 MOD 3</code>?", opts: ["3", "1", "3.33", "0"], a: 1, why: "10 entre 3 cabe 3 veces (9) y sobra 1." },
     { q: "¿Cuánto da <code>(4 + 6) / 2 * 3</code>?", opts: ["15", "1.66", "11", "30"], a: 0, why: "Paréntesis: 10. Luego de izquierda a derecha: 10/2=5, 5*3=15." },
-    { q: "¿Qué condición dice si <code>n</code> es múltiplo de 5?", opts: ["n / 5 = 0", "n MOD 5 = 0", "n MOD 5 = 5", "n = 5"], a: 1, why: "Si el resto de dividir entre 5 es 0, es múltiplo de 5." },
+    { q: "¿Qué condición dice si <code>n</code> es múltiplo de 5?", opts: ["n / 5 == 0", "n MOD 5 == 0", "n MOD 5 == 5", "n == 5"], a: 1, why: "Si el resto de dividir entre 5 es 0, es múltiplo de 5." },
     { q: "¿Qué da <code>Verdadero O Falso</code>?", opts: ["VERDADERO", "FALSO", "Error", "Depende"], a: 0, why: "Con O basta que una sea verdadera." },
     { q: "¿Qué da <code>NO (3 > 1)</code>?", opts: ["VERDADERO", "FALSO", "3", "Error"], a: 1, why: "3 > 1 es verdadero; NO lo invierte a falso." },
     { q: "¿Cuál comprueba que la nota esté entre 1 y 10 (incluidos)?", opts: ["1 <= nota <= 10", "nota >= 1 Y nota <= 10", "nota >= 1 O nota <= 10", "nota = 1 Y nota = 10"], a: 1, why: "Hay que repetir la variable y unir con Y. Con O cualquier número cumpliría." },
@@ -1858,8 +1862,8 @@ s MOD 60         // segundos que sobran`) },
       text: "Lee una cantidad de segundos (entero) y muestra cuántas horas, minutos y segundos son. La última línea debe tener el formato:<br><code>H h M min S s</code><br>Ejemplo: con 3725 → <code>1 h 2 min 5 s</code>",
       starter: "Algoritmo Segundos\n\tDefinir total, h, m, s Como Entero\n\tEscribir \"Segundos:\"\n\tLeer total\n\t\nFinAlgoritmo",
       tests: [{ in: ["3725"], out: "1 h 2 min 5 s" }, { in: ["59"], out: "0 h 0 min 59 s" }, { in: ["7200"], out: "2 h 0 min 0 s" }],
-      hint: "Una hora tiene 3600 segundos. h <- trunc(total / 3600). Lo que sobra es total MOD 3600; de eso saca los minutos con 60.",
-      solution: 'Algoritmo Segundos\n\tDefinir total, h, m, s Como Entero\n\tEscribir "Segundos:"\n\tLeer total\n\th <- trunc(total / 3600)\n\tm <- trunc((total MOD 3600) / 60)\n\ts <- total MOD 60\n\tEscribir h, " h ", m, " min ", s, " s"\nFinAlgoritmo' },
+      hint: "Una hora tiene 3600 segundos. h = trunc(total / 3600). Lo que sobra es total MOD 3600; de eso saca los minutos con 60.",
+      solution: 'Algoritmo Segundos\n\tDefinir total, h, m, s Como Entero\n\tEscribir "Segundos:"\n\tLeer total\n\th = trunc(total / 3600)\n\tm = trunc((total MOD 3600) / 60)\n\ts = total MOD 60\n\tEscribir h, " h ", m, " min ", s, " s"\nFinAlgoritmo' },
     { id: "ex04b", title: "Grados Celsius a Fahrenheit", lang: "pseudo",
       text: "Lee una temperatura en grados Celsius (Real) y muéstrala en Fahrenheit con la fórmula F = C × 9 / 5 + 32. Última línea: <code>X °F</code>",
       starter: "Algoritmo Temperatura\n\tDefinir c Como Real\n\t\nFinAlgoritmo",
@@ -1870,8 +1874,8 @@ s MOD 60         // segundos que sobran`) },
       text: "Lee un número entero y muestra en la última línea <code>VERDADERO</code> si es par o <code>FALSO</code> si es impar. (Todavía sin usar Si: solo con una comparación).",
       starter: "Algoritmo EsPar\n\tDefinir n Como Entero\n\t\nFinAlgoritmo",
       tests: [{ in: ["8"], out: "VERDADERO" }, { in: ["7"], out: "FALSO" }, { in: ["0"], out: "VERDADERO" }],
-      hint: "Escribir n MOD 2 = 0",
-      solution: 'Algoritmo EsPar\n\tDefinir n Como Entero\n\tEscribir "Número:"\n\tLeer n\n\tEscribir n MOD 2 = 0\nFinAlgoritmo' },
+      hint: "Escribir n MOD 2 == 0",
+      solution: 'Algoritmo EsPar\n\tDefinir n Como Entero\n\tEscribir "Número:"\n\tLeer n\n\tEscribir n MOD 2 == 0\nFinAlgoritmo' },
   ]
 });
 
@@ -1885,14 +1889,14 @@ MOD({
   lessons: ["l05", "l06", "l07", "l08", "l09"],
   exam: {
     extra: [
-      { q: "¿Cuántas veces se muestra «Hola»?", code: 'Para i <- 1 Hasta 4 Hacer\n\tEscribir "Hola"\nFinPara', opts: ["3", "4", "5", "Infinitas"], a: 1, why: "i toma los valores 1, 2, 3 y 4: cuatro vueltas." },
-      { q: "¿Qué muestra?", code: 'x <- 15\nSi x > 10 Entonces\n\tEscribir "A"\nSiNo\n\tEscribir "B"\nFinSi', opts: ["A", "B", "A y B", "Nada"], a: 0, why: "15 > 10 es verdadero, se ejecuta la rama Entonces." },
-      { q: "¿Qué valor tiene <code>suma</code> al final?", code: "suma <- 0\nPara i <- 1 Hasta 3 Hacer\n\tsuma <- suma + i\nFinPara", opts: ["3", "6", "4", "0"], a: 1, why: "0+1=1, 1+2=3, 3+3=6. Es un acumulador." },
+      { q: "¿Cuántas veces se muestra «Hola»?", code: 'Para i = 1 Hasta 4 Hacer\n\tEscribir "Hola"\nFinPara', opts: ["3", "4", "5", "Infinitas"], a: 1, why: "i toma los valores 1, 2, 3 y 4: cuatro vueltas." },
+      { q: "¿Qué muestra?", code: 'x = 15\nSi x > 10 Entonces\n\tEscribir "A"\nSiNo\n\tEscribir "B"\nFinSi', opts: ["A", "B", "A y B", "Nada"], a: 0, why: "15 > 10 es verdadero, se ejecuta la rama Entonces." },
+      { q: "¿Qué valor tiene <code>suma</code> al final?", code: "suma = 0\nPara i = 1 Hasta 3 Hacer\n\tsuma = suma + i\nFinPara", opts: ["3", "6", "4", "0"], a: 1, why: "0+1=1, 1+2=3, 3+3=6. Es un acumulador." },
       { q: "¿Cuál es la diferencia principal entre Mientras y Repetir?", opts: ["No hay diferencia", "Repetir ejecuta su bloque al menos una vez", "Mientras siempre es infinito", "Repetir no usa condición"], a: 1, why: "Repetir revisa la condición al final, así que entra al menos una vez. Mientras la revisa antes de entrar." },
-      { q: "¿Qué pasa con este código?", code: "i <- 1\nMientras i <= 5 Hacer\n\tEscribir i\nFinMientras", opts: ["Muestra 1 a 5", "Bucle infinito: i nunca cambia", "No muestra nada", "Error de sintaxis"], a: 1, why: "Falta i <- i + 1. La condición nunca se vuelve falsa." },
+      { q: "¿Qué pasa con este código?", code: "i = 1\nMientras i <= 5 Hacer\n\tEscribir i\nFinMientras", opts: ["Muestra 1 a 5", "Bucle infinito: i nunca cambia", "No muestra nada", "Error de sintaxis"], a: 1, why: "Falta i = i + 1. La condición nunca se vuelve falsa." },
       { q: "¿Cuál es la mejor estructura para un menú con opciones 1, 2, 3 y 4?", opts: ["Para", "Segun", "Mientras", "Definir"], a: 1, why: "Segun compara una variable con varios valores posibles de forma clara." },
-      { q: "¿Qué muestra?", code: "c <- 0\nPara i <- 1 Hasta 10 Hacer\n\tSi i MOD 3 = 0 Entonces\n\t\tc <- c + 1\n\tFinSi\nFinPara\nEscribir c", opts: ["3", "10", "4", "0"], a: 0, why: "Cuenta los múltiplos de 3 entre 1 y 10: 3, 6 y 9." },
-      { q: "¿Qué valores toma i?", code: "Para i <- 10 Hasta 0 Con Paso -5 Hacer\n\tEscribir i\nFinPara", opts: ["10, 5, 0", "10, 5", "0, 5, 10", "Ninguno"], a: 0, why: "Empieza en 10 y resta 5 cada vez mientras no pase de 0: 10, 5, 0." },
+      { q: "¿Qué muestra?", code: "c = 0\nPara i = 1 Hasta 10 Hacer\n\tSi i MOD 3 == 0 Entonces\n\t\tc = c + 1\n\tFinSi\nFinPara\nEscribir c", opts: ["3", "10", "4", "0"], a: 0, why: "Cuenta los múltiplos de 3 entre 1 y 10: 3, 6 y 9." },
+      { q: "¿Qué valores toma i?", code: "Para i = 10 Hasta 0 Con Paso -5 Hacer\n\tEscribir i\nFinPara", opts: ["10, 5, 0", "10, 5", "0, 5, 10", "Ninguno"], a: 0, why: "Empieza en 10 y resta 5 cada vez mientras no pase de 0: 10, 5, 0." },
       { fill: true, q: "¿Qué palabra cierra un bloque <code>Si</code>?", a: ["finsi", "fin si"], why: "Cada Si se cierra con FinSi." },
       { q: "Para encontrar el número mayor de una lista que vas leyendo, ¿con qué valor conviene inicializar <code>mayor</code>?", opts: ["Con 0 siempre", "Con el primer número leído", "Con 1000", "No hace falta inicializarlo"], a: 1, why: "Si todos los números fueran negativos, empezar en 0 daría un resultado falso. Lo seguro es usar el primer valor." },
     ],
@@ -1900,10 +1904,10 @@ MOD({
       id: "ex_m2", title: "Adivina el número (versión verificable)",
       text: "El número secreto es <b>37</b>. Lee intentos uno tras otro. Para cada intento muestra <code>Más alto</code> si el secreto es mayor, o <code>Más bajo</code> si es menor. Cuando acierte, muestra como última línea <code>¡Correcto en N intentos!</code>",
       lang: "pseudo",
-      starter: "Algoritmo Adivina\n\tDefinir secreto, intento, intentos Como Entero\n\tsecreto <- 37\n\tintentos <- 0\n\t\nFinAlgoritmo",
+      starter: "Algoritmo Adivina\n\tDefinir secreto, intento, intentos Como Entero\n\tsecreto = 37\n\tintentos = 0\n\t\nFinAlgoritmo",
       tests: [{ in: ["50", "25", "37"], out: "¡Correcto en 3 intentos!" }, { in: ["37"], out: "¡Correcto en 1 intentos!" }, { in: ["10", "20", "30", "40", "38", "37"], out: "¡Correcto en 6 intentos!" }],
-      hint: "Usa Repetir ... Hasta Que intento = secreto. Dentro: Leer, sumar 1 a intentos, y un Si para dar la pista.",
-      solution: 'Algoritmo Adivina\n\tDefinir secreto, intento, intentos Como Entero\n\tsecreto <- 37\n\tintentos <- 0\n\tRepetir\n\t\tEscribir "Tu intento:"\n\t\tLeer intento\n\t\tintentos <- intentos + 1\n\t\tSi intento < secreto Entonces\n\t\t\tEscribir "Más alto"\n\t\tSiNo\n\t\t\tSi intento > secreto Entonces\n\t\t\t\tEscribir "Más bajo"\n\t\t\tFinSi\n\t\tFinSi\n\tHasta Que intento = secreto\n\tEscribir "¡Correcto en ", intentos, " intentos!"\nFinAlgoritmo'
+      hint: "Usa Repetir ... Hasta Que intento == secreto. Dentro: Leer, sumar 1 a intentos, y un Si para dar la pista.",
+      solution: 'Algoritmo Adivina\n\tDefinir secreto, intento, intentos Como Entero\n\tsecreto = 37\n\tintentos = 0\n\tRepetir\n\t\tEscribir "Tu intento:"\n\t\tLeer intento\n\t\tintentos = intentos + 1\n\t\tSi intento < secreto Entonces\n\t\t\tEscribir "Más alto"\n\t\tSiNo\n\t\t\tSi intento > secreto Entonces\n\t\t\t\tEscribir "Más bajo"\n\t\t\tFinSi\n\t\tFinSi\n\tHasta Que intento == secreto\n\tEscribir "¡Correcto en ", intentos, " intentos!"\nFinAlgoritmo'
     }
   }
 });
@@ -1916,7 +1920,7 @@ L({
 <p>Hasta ahora los programas ejecutaban todas las líneas, siempre, en orden. Pero la vida real está llena de decisiones: <i>si llueve, llevo paraguas</i>. Para eso existe la estructura <b>Si</b>:</p>
 ${C(`Algoritmo Paraguas
 	Definir llueve Como Logico
-	llueve <- Verdadero
+	llueve = Verdadero
 	Si llueve Entonces
 		Escribir "Lleva paraguas"
 	FinSi
@@ -1947,8 +1951,8 @@ ${TIP("Usa sangría dentro de cada rama. Ver de un vistazo qué está «adentro�
 ${C(`Algoritmo Descuento
 	Definir edad Como Entero
 	Definir esEstudiante Como Logico
-	edad <- 70
-	esEstudiante <- Falso
+	edad = 70
+	esEstudiante = Falso
 	Si edad >= 65 O esEstudiante Entonces
 		Escribir "Tienes 50% de descuento"
 	SiNo
@@ -1979,10 +1983,10 @@ FinAlgoritmo`)}
 ${WARN("Cada <code>Si</code> necesita su propio <code>FinSi</code>. Si te falta uno, el mensaje de error te dirá en qué línea empezó el Si que quedó abierto.")}` },
     { h: "Errores típicos", body: `
 <ul>
-<li><b>Usar &lt;- en vez de = para comparar.</b> <code>Si x &lt;- 5</code> está mal; es <code>Si x = 5</code>.</li>
+<li><b>Usar = en vez de == para comparar.</b> <code>Si x = 5</code> da error; se escribe <code>Si x == 5</code>. Recuerda: un <code>=</code> guarda, dos <code>==</code> comparan.</li>
 <li><b>Olvidar Entonces o FinSi.</b></li>
 <li><b>Condiciones que se pisan.</b> En el ejemplo de notas, el orden de las preguntas importa.</li>
-<li><b>Comparar textos con distinta escritura.</b> <code>"si" = "Si"</code> es FALSO: mayúsculas y minúsculas cuentan.</li>
+<li><b>Comparar textos con distinta escritura.</b> <code>"si" == "Si"</code> es FALSO: mayúsculas y minúsculas cuentan.</li>
 </ul>
 ${PRO("Las condiciones son la base de cualquier aplicación: validar un formulario, mostrar u ocultar un botón, decidir si un pago se aprueba. Probar <b>todos los caminos</b> (qué pasa si es verdadero, si es falso, y en el límite exacto, como edad = 18) es lo que hacen los testers profesionales.")}` },
   ],
@@ -2004,14 +2008,14 @@ SiNo
 		Escribir "Desaprobado"
 	FinSi
 FinSi`) },
-    { h: "Recuerda", body: `<ul><li>Comparar con <code>=</code>, asignar con <code>&lt;-</code>.</li><li>Cada Si cierra con su FinSi.</li><li>En casos escalonados, pregunta del más exigente al menos exigente.</li><li>Prueba el valor límite (ej: exactamente 18).</li></ul>` },
+    { h: "Recuerda", body: `<ul><li>Comparar con <code>==</code>, asignar con <code>=</code>.</li><li>Cada Si cierra con su FinSi.</li><li>En casos escalonados, pregunta del más exigente al menos exigente.</li><li>Prueba el valor límite (ej: exactamente 18).</li></ul>` },
   ],
   quiz: [
     { q: "¿Qué muestra si <code>x</code> vale 3?", code: 'Si x > 5 Entonces\n\tEscribir "Grande"\nFinSi\nEscribir "Fin"', opts: ["Grande Fin", "Fin", "Grande", "Nada"], a: 1, why: "3 > 5 es falso: se salta el bloque, pero «Fin» está fuera del Si y siempre se muestra." },
     { q: "¿Qué muestra si <code>edad</code> vale 18?", code: 'Si edad > 18 Entonces\n\tEscribir "Mayor"\nSiNo\n\tEscribir "Menor"\nFinSi', opts: ["Mayor", "Menor", "Las dos", "Error"], a: 1, why: "18 > 18 es falso. Para incluir el 18 había que usar >=. ¡Por eso hay que probar los límites!" },
     { q: "¿Cuál condición es verdadera solo si n está entre 1 y 100?", opts: ["n > 1 O n < 100", "n >= 1 Y n <= 100", "n = 1 Y n = 100", "NO (n > 1)"], a: 1, why: "Ambas condiciones deben cumplirse: Y." },
     { q: "Con <code>nota = 9.5</code>, ¿qué muestra?", code: 'Si nota >= 4 Entonces\n\tEscribir "Aprobado"\nSiNo\n\tSi nota >= 9 Entonces\n\t\tEscribir "Excelente"\n\tFinSi\nFinSi', opts: ["Excelente", "Aprobado", "Aprobado y Excelente", "Nada"], a: 1, why: "Entra en la primera rama (9.5 >= 4) y nunca llega a revisar >= 9. El orden de las preguntas está mal." },
-    { q: "¿Qué está mal aquí? <code>Si total &lt;- 100 Entonces</code>", opts: ["Nada", "Se usa <- (asignar) en lugar de = (comparar)", "Falta SiNo", "100 debería ir entre comillas"], a: 1, why: "Para preguntar si son iguales se usa =." },
+    { q: "¿Qué está mal aquí? <code>Si total = 100 Entonces</code>", opts: ["Nada", "Se usa = (guardar) en lugar de == (comparar)", "Falta SiNo", "100 debería ir entre comillas"], a: 1, why: "Para preguntar si son iguales se usan dos signos: ==." },
     { q: "En un Si / SiNo, ¿cuántas ramas se ejecutan?", opts: ["Ninguna", "Exactamente una", "Las dos", "Depende del FinSi"], a: 1, why: "Siempre una: la del Entonces si es verdadera, la del SiNo si es falsa." },
   ],
   exercises: [
@@ -2019,8 +2023,8 @@ FinSi`) },
       text: "Lee un número entero. La última línea debe decir <code>Es par</code> o <code>Es impar</code>.",
       starter: "Algoritmo ParImpar\n\tDefinir n Como Entero\n\t\nFinAlgoritmo",
       tests: [{ in: ["4"], out: "Es par" }, { in: ["7"], out: "Es impar" }, { in: ["0"], out: "Es par" }, { in: ["-3"], out: "Es impar" }],
-      hint: "Si n MOD 2 = 0 Entonces ... SiNo ... FinSi",
-      solution: 'Algoritmo ParImpar\n\tDefinir n Como Entero\n\tEscribir "Número:"\n\tLeer n\n\tSi n MOD 2 = 0 Entonces\n\t\tEscribir "Es par"\n\tSiNo\n\t\tEscribir "Es impar"\n\tFinSi\nFinAlgoritmo' },
+      hint: "Si n MOD 2 == 0 Entonces ... SiNo ... FinSi",
+      solution: 'Algoritmo ParImpar\n\tDefinir n Como Entero\n\tEscribir "Número:"\n\tLeer n\n\tSi n MOD 2 == 0 Entonces\n\t\tEscribir "Es par"\n\tSiNo\n\t\tEscribir "Es impar"\n\tFinSi\nFinAlgoritmo' },
     { id: "ex05b", title: "El mayor de tres", lang: "pseudo",
       text: "Lee tres números enteros distintos y muestra como última línea <code>El mayor es X</code>.",
       starter: "Algoritmo MayorDeTres\n\tDefinir a, b, c Como Entero\n\t\nFinAlgoritmo",
@@ -2031,8 +2035,8 @@ FinSi`) },
       text: "Un año es bisiesto si es divisible por 4 y no por 100, <b>o</b> si es divisible por 400. Lee un año y muestra <code>Bisiesto</code> o <code>No bisiesto</code>.",
       starter: "Algoritmo Bisiesto\n\tDefinir anio Como Entero\n\t\nFinAlgoritmo",
       tests: [{ in: ["2024"], out: "Bisiesto" }, { in: ["1900"], out: "No bisiesto" }, { in: ["2000"], out: "Bisiesto" }, { in: ["2026"], out: "No bisiesto" }],
-      hint: "(anio MOD 4 = 0 Y anio MOD 100 <> 0) O anio MOD 400 = 0",
-      solution: 'Algoritmo Bisiesto\n\tDefinir anio Como Entero\n\tEscribir "Año:"\n\tLeer anio\n\tSi (anio MOD 4 = 0 Y anio MOD 100 <> 0) O anio MOD 400 = 0 Entonces\n\t\tEscribir "Bisiesto"\n\tSiNo\n\t\tEscribir "No bisiesto"\n\tFinSi\nFinAlgoritmo' },
+      hint: "(anio MOD 4 == 0 Y anio MOD 100 <> 0) O anio MOD 400 == 0",
+      solution: 'Algoritmo Bisiesto\n\tDefinir anio Como Entero\n\tEscribir "Año:"\n\tLeer anio\n\tSi (anio MOD 4 == 0 Y anio MOD 100 <> 0) O anio MOD 400 == 0 Entonces\n\t\tEscribir "Bisiesto"\n\tSiNo\n\t\tEscribir "No bisiesto"\n\tFinSi\nFinAlgoritmo' },
   ]
 });
 
@@ -2075,7 +2079,7 @@ ${C(`Algoritmo Calculadora
 		2: Escribir "Resultado: ", a - b
 		3: Escribir "Resultado: ", a * b
 		4:
-			Si b = 0 Entonces
+			Si b == 0 Entonces
 				Escribir "No se puede dividir entre cero"
 			SiNo
 				Escribir "Resultado: ", a / b
@@ -2088,7 +2092,7 @@ FinAlgoritmo`)}
     { h: "Segun también funciona con textos", body: `
 ${C(`Algoritmo Semaforo
 	Definir color Como Cadena
-	color <- "amarillo"
+	color = "amarillo"
 	Segun color Hacer
 		"verde": Escribir "Avanza"
 		"amarillo": Escribir "Precaución"
@@ -2141,10 +2145,10 @@ L({
 <p>El bucle <b>Mientras</b> repite un bloque <b>mientras</b> una condición sea verdadera:</p>
 ${C(`Algoritmo Contar
 	Definir i Como Entero
-	i <- 1
+	i = 1
 	Mientras i <= 5 Hacer
 		Escribir i
-		i <- i + 1
+		i = i + 1
 	FinMientras
 	Escribir "¡Listo!"
 FinAlgoritmo`)}
@@ -2153,13 +2157,13 @@ FinAlgoritmo`)}
 ${TIP("Usa el botón <b>Paso a paso</b> del Laboratorio con este programa. Ver cómo cambia i en cada vuelta es la mejor forma de entender un bucle.")}` },
     { h: "Las tres partes de un bucle", body: `
 <p>Casi todos los bucles tienen tres partes. Si falta alguna, hay problemas:</p>
-${TABLE(["Parte", "En el ejemplo", "Si la olvidas..."], [["<b>Inicialización</b>", "<code>i &lt;- 1</code>", "Error: la variable no tiene valor"], ["<b>Condición</b>", "<code>i &lt;= 5</code>", "No sabe cuándo parar"], ["<b>Actualización</b>", "<code>i &lt;- i + 1</code>", "<b>Bucle infinito</b>: la condición nunca cambia"]])}
+${TABLE(["Parte", "En el ejemplo", "Si la olvidas..."], [["<b>Inicialización</b>", "<code>i = 1</code>", "Error: la variable no tiene valor"], ["<b>Condición</b>", "<code>i &lt;= 5</code>", "No sabe cuándo parar"], ["<b>Actualización</b>", "<code>i = i + 1</code>", "<b>Bucle infinito</b>: la condición nunca cambia"]])}
 <p>Un <b>bucle infinito</b> es un programa que nunca termina. Prueba este (el Laboratorio lo detendrá automáticamente):</p>
 ${C(`Algoritmo Infinito
-	i <- 1
+	i = 1
 	Mientras i <= 5 Hacer
 		Escribir i
-		// Falta: i <- i + 1
+		// Falta: i = i + 1
 	FinMientras
 FinAlgoritmo`)}
 ${WARN("Si tu programa «se cuelga» o no termina nunca, sospecha de un bucle infinito. Revisa que la variable de la condición cambie dentro del bucle.")}` },
@@ -2167,11 +2171,11 @@ ${WARN("Si tu programa «se cuelga» o no termina nunca, sospecha de un bucle in
 <p>El Mientras brilla cuando no sabes de antemano cuántas veces repetir. Por ejemplo, sumar números hasta que la persona escriba 0:</p>
 ${C(`Algoritmo SumarHastaCero
 	Definir n, suma Como Real
-	suma <- 0
+	suma = 0
 	Escribir "Número (0 para terminar):"
 	Leer n
 	Mientras n <> 0 Hacer
-		suma <- suma + n
+		suma = suma + n
 		Escribir "Número (0 para terminar):"
 		Leer n
 	FinMientras
@@ -2195,10 +2199,10 @@ FinAlgoritmo`)}
 ${TABLE(["", "Mientras", "Repetir"], [["Revisa la condición", "Antes de cada vuelta", "Después de cada vuelta"], ["Mínimo de vueltas", "0", "1"], ["Sigue repitiendo cuando la condición es", "Verdadera", "Falsa (hasta que sea verdadera)"]])}` },
   ],
   cheat: [
-    { h: "Mientras", body: CN(`i <- 1                 // inicializar
+    { h: "Mientras", body: CN(`i = 1                 // inicializar
 Mientras i <= 10 Hacer  // condición
 	Escribir i
-	i <- i + 1         // actualizar
+	i = i + 1         // actualizar
 FinMientras`) },
     { h: "Repetir", body: CN(`Repetir
 	Leer n
@@ -2206,11 +2210,11 @@ Hasta Que n > 0   // sale cuando es VERDADERO`) },
     { h: "Recuerda", body: `<ul><li>Tres partes: inicializar, condición, actualizar.</li><li>Sin actualizar = <b>bucle infinito</b>.</li><li>Repetir entra al menos una vez: ideal para validar.</li><li><b>Centinela</b>: valor especial que indica fin (ej: 0).</li></ul>` },
   ],
   quiz: [
-    { q: "¿Qué muestra?", code: "i <- 3\nMientras i > 0 Hacer\n\tEscribir i\n\ti <- i - 1\nFinMientras", opts: ["3 2 1", "3 2 1 0", "1 2 3", "Infinito"], a: 0, why: "Cuando i llega a 0, la condición i > 0 es falsa y sale sin mostrarlo." },
-    { q: "¿Cuántas veces se ejecuta el bloque?", code: "i <- 10\nMientras i < 5 Hacer\n\tEscribir i\nFinMientras", opts: ["0", "1", "5", "Infinitas"], a: 0, why: "La condición es falsa desde el principio: nunca entra." },
-    { q: "¿Cuántas veces se ejecuta el bloque?", code: "i <- 10\nRepetir\n\tEscribir i\nHasta Que i > 5", opts: ["0", "1", "5", "Infinitas"], a: 1, why: "Repetir siempre entra una vez y recién después revisa (10 > 5 es verdadero, sale)." },
-    { q: "¿Qué le falta a este bucle para no ser infinito?", code: "x <- 1\nMientras x < 100 Hacer\n\tEscribir x\nFinMientras", opts: ["Un SiNo", "Actualizar x dentro del bucle", "Definir x como Real", "Nada"], a: 1, why: "x nunca cambia, así que x < 100 siempre es verdadero." },
-    { q: "¿Qué valor tiene <code>n</code> al final?", code: "n <- 1\nMientras n < 20 Hacer\n\tn <- n * 2\nFinMientras", opts: ["16", "20", "32", "64"], a: 2, why: "1, 2, 4, 8, 16, 32. Con 32 la condición es falsa y sale." },
+    { q: "¿Qué muestra?", code: "i = 3\nMientras i > 0 Hacer\n\tEscribir i\n\ti = i - 1\nFinMientras", opts: ["3 2 1", "3 2 1 0", "1 2 3", "Infinito"], a: 0, why: "Cuando i llega a 0, la condición i > 0 es falsa y sale sin mostrarlo." },
+    { q: "¿Cuántas veces se ejecuta el bloque?", code: "i = 10\nMientras i < 5 Hacer\n\tEscribir i\nFinMientras", opts: ["0", "1", "5", "Infinitas"], a: 0, why: "La condición es falsa desde el principio: nunca entra." },
+    { q: "¿Cuántas veces se ejecuta el bloque?", code: "i = 10\nRepetir\n\tEscribir i\nHasta Que i > 5", opts: ["0", "1", "5", "Infinitas"], a: 1, why: "Repetir siempre entra una vez y recién después revisa (10 > 5 es verdadero, sale)." },
+    { q: "¿Qué le falta a este bucle para no ser infinito?", code: "x = 1\nMientras x < 100 Hacer\n\tEscribir x\nFinMientras", opts: ["Un SiNo", "Actualizar x dentro del bucle", "Definir x como Real", "Nada"], a: 1, why: "x nunca cambia, así que x < 100 siempre es verdadero." },
+    { q: "¿Qué valor tiene <code>n</code> al final?", code: "n = 1\nMientras n < 20 Hacer\n\tn = n * 2\nFinMientras", opts: ["16", "20", "32", "64"], a: 2, why: "1, 2, 4, 8, 16, 32. Con 32 la condición es falsa y sale." },
     { q: "¿Qué estructura es mejor para pedir una contraseña hasta que sea correcta?", opts: ["Segun", "Repetir ... Hasta Que", "Si", "Definir"], a: 1, why: "Hay que pedirla al menos una vez y repetir hasta que sea correcta." },
   ],
   exercises: [
@@ -2218,20 +2222,20 @@ Hasta Que n > 0   // sale cuando es VERDADERO`) },
       text: "Lee un número entero N y muestra una cuenta regresiva desde N hasta 1, un número por línea. Después muestra <code>¡Despegue!</code>",
       starter: "Algoritmo Regresiva\n\tDefinir n Como Entero\n\tLeer n\n\t\nFinAlgoritmo",
       tests: [{ in: ["3"], out: "3\n2\n1\n¡Despegue!" }, { in: ["5"], out: "5\n4\n3\n2\n1\n¡Despegue!" }],
-      hint: "Mientras n >= 1 Hacer: Escribir n, y luego n <- n - 1.",
-      solution: 'Algoritmo Regresiva\n\tDefinir n Como Entero\n\tLeer n\n\tMientras n >= 1 Hacer\n\t\tEscribir n\n\t\tn <- n - 1\n\tFinMientras\n\tEscribir "¡Despegue!"\nFinAlgoritmo' },
+      hint: "Mientras n >= 1 Hacer: Escribir n, y luego n = n - 1.",
+      solution: 'Algoritmo Regresiva\n\tDefinir n Como Entero\n\tLeer n\n\tMientras n >= 1 Hacer\n\t\tEscribir n\n\t\tn = n - 1\n\tFinMientras\n\tEscribir "¡Despegue!"\nFinAlgoritmo' },
     { id: "ex07b", title: "Promedio hasta cero", lang: "pseudo",
       text: "Lee números hasta que se ingrese 0 (el 0 no cuenta). Muestra como última línea <code>Promedio: X</code>. Si el primer número ya es 0, muestra <code>No hay datos</code>.",
       starter: "Algoritmo Promedio\n\tDefinir n, suma Como Real\n\tDefinir cantidad Como Entero\n\t\nFinAlgoritmo",
       tests: [{ in: ["4", "6", "8", "0"], out: "Promedio: 6" }, { in: ["10", "0"], out: "Promedio: 10" }, { in: ["0"], out: "No hay datos" }, { in: ["1", "2", "0"], out: "Promedio: 1.5" }],
       hint: "Necesitas un acumulador (suma) y un contador (cantidad). Al final, si cantidad > 0 divide suma entre cantidad.",
-      solution: 'Algoritmo Promedio\n\tDefinir n, suma Como Real\n\tDefinir cantidad Como Entero\n\tsuma <- 0\n\tcantidad <- 0\n\tLeer n\n\tMientras n <> 0 Hacer\n\t\tsuma <- suma + n\n\t\tcantidad <- cantidad + 1\n\t\tLeer n\n\tFinMientras\n\tSi cantidad > 0 Entonces\n\t\tEscribir "Promedio: ", suma / cantidad\n\tSiNo\n\t\tEscribir "No hay datos"\n\tFinSi\nFinAlgoritmo' },
+      solution: 'Algoritmo Promedio\n\tDefinir n, suma Como Real\n\tDefinir cantidad Como Entero\n\tsuma = 0\n\tcantidad = 0\n\tLeer n\n\tMientras n <> 0 Hacer\n\t\tsuma = suma + n\n\t\tcantidad = cantidad + 1\n\t\tLeer n\n\tFinMientras\n\tSi cantidad > 0 Entonces\n\t\tEscribir "Promedio: ", suma / cantidad\n\tSiNo\n\t\tEscribir "No hay datos"\n\tFinSi\nFinAlgoritmo' },
     { id: "ex07c", title: "Contraseña", lang: "pseudo",
       text: "La contraseña correcta es <code>secreto</code>. Pídela hasta que la escriban bien. Por cada intento incorrecto muestra <code>Incorrecta</code>. Al acertar, la última línea debe ser <code>Acceso concedido</code>.",
       starter: "Algoritmo Clave\n\tDefinir clave Como Cadena\n\t\nFinAlgoritmo",
       tests: [{ in: ["hola", "1234", "secreto"], out: "Acceso concedido" }, { in: ["secreto"], out: "Acceso concedido" }],
-      hint: "Repetir: Leer clave; Si clave <> \"secreto\" Entonces Escribir \"Incorrecta\". Hasta Que clave = \"secreto\".",
-      solution: 'Algoritmo Clave\n\tDefinir clave Como Cadena\n\tRepetir\n\t\tEscribir "Contraseña:"\n\t\tLeer clave\n\t\tSi clave <> "secreto" Entonces\n\t\t\tEscribir "Incorrecta"\n\t\tFinSi\n\tHasta Que clave = "secreto"\n\tEscribir "Acceso concedido"\nFinAlgoritmo' },
+      hint: "Repetir: Leer clave; Si clave <> \"secreto\" Entonces Escribir \"Incorrecta\". Hasta Que clave == \"secreto\".",
+      solution: 'Algoritmo Clave\n\tDefinir clave Como Cadena\n\tRepetir\n\t\tEscribir "Contraseña:"\n\t\tLeer clave\n\t\tSi clave <> "secreto" Entonces\n\t\t\tEscribir "Incorrecta"\n\t\tFinSi\n\tHasta Que clave == "secreto"\n\tEscribir "Acceso concedido"\nFinAlgoritmo' },
   ]
 });
 
@@ -2242,27 +2246,27 @@ L({
     { h: "El bucle Para", body: `
 <p>Cuando sabes <b>cuántas veces</b> repetir, el bucle <b>Para</b> es más cómodo: inicializa, revisa y actualiza la variable por ti.</p>
 ${C(`Algoritmo TablaDel7
-	Para i <- 1 Hasta 10 Hacer
+	Para i = 1 Hasta 10 Hacer
 		Escribir "7 x ", i, " = ", 7 * i
 	FinPara
 FinAlgoritmo`)}
-<p><code>Para i &lt;- 1 Hasta 10</code> significa: «i empieza en 1, en cada vuelta aumenta en 1, y la última vuelta es con i = 10».</p>
+<p><code>Para i = 1 Hasta 10</code> significa: «i empieza en 1, en cada vuelta aumenta en 1, y la última vuelta es con i = 10».</p>
 <p>Este Para hace exactamente lo mismo que este Mientras:</p>
-${CN(`i <- 1
+${CN(`i = 1
 Mientras i <= 10 Hacer
 	Escribir "7 x ", i, " = ", 7 * i
-	i <- i + 1
+	i = i + 1
 FinMientras`)}` },
     { h: "Con Paso: saltos y cuenta atrás", body: `
 <p>Con <code>Con Paso</code> cambias cuánto avanza la variable en cada vuelta:</p>
 ${C(`Algoritmo Pasos
 	Escribir "Pares del 0 al 10:"
-	Para i <- 0 Hasta 10 Con Paso 2 Hacer
+	Para i = 0 Hasta 10 Con Paso 2 Hacer
 		Escribir Sin Saltar i, " "
 	FinPara
 	Escribir ""
 	Escribir "Cuenta atrás:"
-	Para i <- 5 Hasta 1 Con Paso -1 Hacer
+	Para i = 5 Hasta 1 Con Paso -1 Hacer
 		Escribir Sin Saltar i, " "
 	FinPara
 	Escribir ""
@@ -2272,54 +2276,54 @@ FinAlgoritmo`)}` },
 ${C(`Algoritmo ContarAprobados
 	Definir nota Como Real
 	Definir aprobados Como Entero
-	aprobados <- 0
-	Para i <- 1 Hasta 5 Hacer
+	aprobados = 0
+	Para i = 1 Hasta 5 Hacer
 		Escribir "Nota del alumno ", i, ":"
 		Leer nota
 		Si nota >= 6 Entonces
-			aprobados <- aprobados + 1
+			aprobados = aprobados + 1
 		FinSi
 	FinPara
 	Escribir "Aprobaron ", aprobados, " de 5"
 FinAlgoritmo`)}
-<p>Patrón: <b>empieza en 0</b> antes del bucle, y dentro haces <code>contador &lt;- contador + 1</code>.</p>` },
+<p>Patrón: <b>empieza en 0</b> antes del bucle, y dentro haces <code>contador = contador + 1</code>.</p>` },
     { h: "Acumuladores", body: `
 <p>Un <b>acumulador</b> va sumando <b>valores</b> (no de 1 en 1). Sirve para totales, promedios, etc.</p>
 ${C(`Algoritmo SumaHastaN
 	Definir n, suma Como Entero
 	Escribir "¿Hasta qué número sumo?"
 	Leer n
-	suma <- 0
-	Para i <- 1 Hasta n Hacer
-		suma <- suma + i
+	suma = 0
+	Para i = 1 Hasta n Hacer
+		suma = suma + i
 	FinPara
 	Escribir "1 + 2 + ... + ", n, " = ", suma
 FinAlgoritmo`)}
-${TABLE(["", "Contador", "Acumulador"], [["Valor inicial", "0", "0 (sumas) o 1 (productos)"], ["Dentro del bucle", "<code>c &lt;- c + 1</code>", "<code>total &lt;- total + valor</code>"], ["Responde", "¿Cuántos?", "¿Cuánto en total?"]])}
+${TABLE(["", "Contador", "Acumulador"], [["Valor inicial", "0", "0 (sumas) o 1 (productos)"], ["Dentro del bucle", "<code>c = c + 1</code>", "<code>total = total + valor</code>"], ["Responde", "¿Cuántos?", "¿Cuánto en total?"]])}
 ${WARN("Inicializa el acumulador <b>antes</b> del bucle. Si lo pones dentro, se reinicia en cada vuelta y siempre tendrás solo el último valor.")}
 <p>Para multiplicar, el acumulador empieza en <b>1</b>. Ejemplo: el factorial de 5 es 1×2×3×4×5:</p>
 ${C(`Algoritmo Factorial
 	Definir n, fact Como Entero
-	n <- 5
-	fact <- 1
-	Para i <- 1 Hasta n Hacer
-		fact <- fact * i
+	n = 5
+	fact = 1
+	Para i = 1 Hasta n Hacer
+		fact = fact * i
 	FinPara
 	Escribir n, "! = ", fact
 FinAlgoritmo`)}` },
     { h: "Bucles anidados", body: `
 <p>Un bucle dentro de otro. Por cada vuelta del bucle de afuera, el de adentro hace <b>todas</b> sus vueltas:</p>
 ${C(`Algoritmo Tablas
-	Para tabla <- 1 Hasta 3 Hacer
+	Para tabla = 1 Hasta 3 Hacer
 		Escribir "--- Tabla del ", tabla, " ---"
-		Para i <- 1 Hasta 5 Hacer
+		Para i = 1 Hasta 5 Hacer
 			Escribir tabla, " x ", i, " = ", tabla * i
 		FinPara
 	FinPara
 FinAlgoritmo`)}
 ${C(`Algoritmo Triangulo
-	Para fila <- 1 Hasta 5 Hacer
-		Para col <- 1 Hasta fila Hacer
+	Para fila = 1 Hasta 5 Hacer
+		Para col = 1 Hasta fila Hacer
 			Escribir Sin Saltar "*"
 		FinPara
 		Escribir ""
@@ -2328,27 +2332,27 @@ FinAlgoritmo`)}
 ${PRO("Los bucles anidados aparecen al recorrer tablas, imágenes (filas y columnas de píxeles) o comparar todos los elementos de una lista con todos los de otra. También son la razón por la que algunos programas se vuelven lentos: 1000 × 1000 = un millón de vueltas.")}` },
   ],
   cheat: [
-    { h: "Para", body: CN(`Para i <- 1 Hasta 10 Hacer
+    { h: "Para", body: CN(`Para i = 1 Hasta 10 Hacer
 	Escribir i
 FinPara
 
-Para i <- 10 Hasta 0 Con Paso -2 Hacer
+Para i = 10 Hasta 0 Con Paso -2 Hacer
 	...
 FinPara`) },
-    { h: "Contador y acumulador", body: CN(`c <- 0
-total <- 0
-Para i <- 1 Hasta n Hacer
-	c <- c + 1             // contador
-	total <- total + i     // acumulador
+    { h: "Contador y acumulador", body: CN(`c = 0
+total = 0
+Para i = 1 Hasta n Hacer
+	c = c + 1             // contador
+	total = total + i     // acumulador
 FinPara`) },
     { h: "¿Qué bucle uso?", body: TABLE(["Situación", "Bucle"], [["Sé cuántas vueltas", "Para"], ["Depende de una condición", "Mientras"], ["Al menos una vez / validar", "Repetir"]]) },
   ],
   quiz: [
-    { q: "¿Cuántas vueltas da?", code: "Para i <- 0 Hasta 9 Hacer\n\tEscribir i\nFinPara", opts: ["9", "10", "11", "0"], a: 1, why: "De 0 a 9 inclusive son 10 valores." },
-    { q: "¿Qué muestra?", code: "Para i <- 1 Hasta 10 Con Paso 3 Hacer\n\tEscribir Sin Saltar i, \" \"\nFinPara", opts: ["1 4 7 10", "1 3 6 9", "3 6 9", "1 4 7"], a: 0, why: "1, 1+3=4, 7, 10. El 10 todavía cumple (no supera 10)." },
-    { q: "¿Qué valor tiene <code>p</code> al final?", code: "p <- 1\nPara i <- 1 Hasta 4 Hacer\n\tp <- p * 2\nFinPara", opts: ["8", "16", "4", "2"], a: 1, why: "1·2·2·2·2 = 16. Es 2 elevado a 4." },
-    { q: "¿Qué está mal?", code: "Para i <- 1 Hasta 5 Hacer\n\tsuma <- 0\n\tsuma <- suma + i\nFinPara\nEscribir suma", opts: ["Nada, muestra 15", "El acumulador se reinicia en cada vuelta: muestra 5", "Falta Con Paso", "i debería empezar en 0"], a: 1, why: "suma <- 0 debe ir antes del bucle." },
-    { q: "¿Cuántas veces se muestra «*»?", code: "Para a <- 1 Hasta 3 Hacer\n\tPara b <- 1 Hasta 4 Hacer\n\t\tEscribir \"*\"\n\tFinPara\nFinPara", opts: ["7", "12", "3", "4"], a: 1, why: "Por cada una de las 3 vueltas de afuera, 4 de adentro: 3×4 = 12." },
+    { q: "¿Cuántas vueltas da?", code: "Para i = 0 Hasta 9 Hacer\n\tEscribir i\nFinPara", opts: ["9", "10", "11", "0"], a: 1, why: "De 0 a 9 inclusive son 10 valores." },
+    { q: "¿Qué muestra?", code: "Para i = 1 Hasta 10 Con Paso 3 Hacer\n\tEscribir Sin Saltar i, \" \"\nFinPara", opts: ["1 4 7 10", "1 3 6 9", "3 6 9", "1 4 7"], a: 0, why: "1, 1+3=4, 7, 10. El 10 todavía cumple (no supera 10)." },
+    { q: "¿Qué valor tiene <code>p</code> al final?", code: "p = 1\nPara i = 1 Hasta 4 Hacer\n\tp = p * 2\nFinPara", opts: ["8", "16", "4", "2"], a: 1, why: "1·2·2·2·2 = 16. Es 2 elevado a 4." },
+    { q: "¿Qué está mal?", code: "Para i = 1 Hasta 5 Hacer\n\tsuma = 0\n\tsuma = suma + i\nFinPara\nEscribir suma", opts: ["Nada, muestra 15", "El acumulador se reinicia en cada vuelta: muestra 5", "Falta Con Paso", "i debería empezar en 0"], a: 1, why: "suma = 0 debe ir antes del bucle." },
+    { q: "¿Cuántas veces se muestra «*»?", code: "Para a = 1 Hasta 3 Hacer\n\tPara b = 1 Hasta 4 Hacer\n\t\tEscribir \"*\"\n\tFinPara\nFinPara", opts: ["7", "12", "3", "4"], a: 1, why: "Por cada una de las 3 vueltas de afuera, 4 de adentro: 3×4 = 12." },
     { q: "Un contador sirve para responder...", opts: ["¿Cuánto suman?", "¿Cuántos hay?", "¿Cuál es el mayor?", "¿Dónde está?"], a: 1, why: "Cuenta ocurrencias sumando de 1 en 1." },
   ],
   exercises: [
@@ -2356,26 +2360,26 @@ FinPara`) },
       text: "Lee un número N y muestra su tabla del 1 al 10 con el formato <code>N x i = resultado</code>. Por ejemplo, para 3 la primera línea es <code>3 x 1 = 3</code>.",
       starter: "Algoritmo Tabla\n\tDefinir n Como Entero\n\tLeer n\n\t\nFinAlgoritmo",
       tests: [{ in: ["3"], out: "3 x 1 = 3\n3 x 2 = 6\n3 x 3 = 9\n3 x 4 = 12\n3 x 5 = 15\n3 x 6 = 18\n3 x 7 = 21\n3 x 8 = 24\n3 x 9 = 27\n3 x 10 = 30" }],
-      hint: "Para i <- 1 Hasta 10 Hacer: Escribir n, \" x \", i, \" = \", n * i",
-      solution: 'Algoritmo Tabla\n\tDefinir n Como Entero\n\tLeer n\n\tPara i <- 1 Hasta 10 Hacer\n\t\tEscribir n, " x ", i, " = ", n * i\n\tFinPara\nFinAlgoritmo' },
+      hint: "Para i = 1 Hasta 10 Hacer: Escribir n, \" x \", i, \" = \", n * i",
+      solution: 'Algoritmo Tabla\n\tDefinir n Como Entero\n\tLeer n\n\tPara i = 1 Hasta 10 Hacer\n\t\tEscribir n, " x ", i, " = ", n * i\n\tFinPara\nFinAlgoritmo' },
     { id: "ex08b", title: "Suma de pares", lang: "pseudo",
       text: "Lee un número N y muestra como última línea la suma de todos los números pares entre 1 y N (incluido N si es par).",
       starter: "Algoritmo SumaPares\n\tDefinir n, suma Como Entero\n\tLeer n\n\t\nFinAlgoritmo",
       tests: [{ in: ["10"], out: "30" }, { in: ["7"], out: "12" }, { in: ["1"], out: "0" }],
-      hint: "Puedes recorrer de 2 a N con paso 2, o recorrer todos y sumar solo si i MOD 2 = 0.",
-      solution: 'Algoritmo SumaPares\n\tDefinir n, suma Como Entero\n\tLeer n\n\tsuma <- 0\n\tPara i <- 2 Hasta n Con Paso 2 Hacer\n\t\tsuma <- suma + i\n\tFinPara\n\tEscribir suma\nFinAlgoritmo' },
+      hint: "Puedes recorrer de 2 a N con paso 2, o recorrer todos y sumar solo si i MOD 2 == 0.",
+      solution: 'Algoritmo SumaPares\n\tDefinir n, suma Como Entero\n\tLeer n\n\tsuma = 0\n\tPara i = 2 Hasta n Con Paso 2 Hacer\n\t\tsuma = suma + i\n\tFinPara\n\tEscribir suma\nFinAlgoritmo' },
     { id: "ex08c", title: "Contar positivos y negativos", lang: "pseudo",
       text: "Lee 5 números. Muestra como últimas dos líneas:<br><code>Positivos: P</code><br><code>Negativos: N</code><br>(el 0 no cuenta como ninguno).",
       starter: "Algoritmo Signos\n\tDefinir x Como Real\n\tDefinir pos, neg Como Entero\n\t\nFinAlgoritmo",
       tests: [{ in: ["3", "-1", "0", "8", "-5"], out: "Positivos: 2\nNegativos: 2" }, { in: ["1", "2", "3", "4", "5"], out: "Positivos: 5\nNegativos: 0" }],
       hint: "Dos contadores en 0. Dentro de un Para de 1 a 5: Leer x, y con Si decide cuál aumentar.",
-      solution: 'Algoritmo Signos\n\tDefinir x Como Real\n\tDefinir pos, neg Como Entero\n\tpos <- 0\n\tneg <- 0\n\tPara i <- 1 Hasta 5 Hacer\n\t\tLeer x\n\t\tSi x > 0 Entonces\n\t\t\tpos <- pos + 1\n\t\tSiNo\n\t\t\tSi x < 0 Entonces\n\t\t\t\tneg <- neg + 1\n\t\t\tFinSi\n\t\tFinSi\n\tFinPara\n\tEscribir "Positivos: ", pos\n\tEscribir "Negativos: ", neg\nFinAlgoritmo' },
+      solution: 'Algoritmo Signos\n\tDefinir x Como Real\n\tDefinir pos, neg Como Entero\n\tpos = 0\n\tneg = 0\n\tPara i = 1 Hasta 5 Hacer\n\t\tLeer x\n\t\tSi x > 0 Entonces\n\t\t\tpos = pos + 1\n\t\tSiNo\n\t\t\tSi x < 0 Entonces\n\t\t\t\tneg = neg + 1\n\t\t\tFinSi\n\t\tFinSi\n\tFinPara\n\tEscribir "Positivos: ", pos\n\tEscribir "Negativos: ", neg\nFinAlgoritmo' },
     { id: "ex08d", title: "Pirámide de números", lang: "pseudo",
       text: "Lee N y muestra N filas: la fila k tiene los números del 1 al k pegados. Para N = 4:<br><pre class=\"mini\">1\n12\n123\n1234</pre>",
       starter: "Algoritmo Piramide\n\tDefinir n Como Entero\n\tLeer n\n\t\nFinAlgoritmo",
       tests: [{ in: ["4"], out: "1\n12\n123\n1234" }, { in: ["2"], out: "1\n12" }],
       hint: "Bucle anidado: afuera fila de 1 a n; adentro col de 1 a fila con Escribir Sin Saltar col; al terminar cada fila, Escribir \"\".",
-      solution: 'Algoritmo Piramide\n\tDefinir n Como Entero\n\tLeer n\n\tPara fila <- 1 Hasta n Hacer\n\t\tPara col <- 1 Hasta fila Hacer\n\t\t\tEscribir Sin Saltar col\n\t\tFinPara\n\t\tEscribir ""\n\tFinPara\nFinAlgoritmo' },
+      solution: 'Algoritmo Piramide\n\tDefinir n Como Entero\n\tLeer n\n\tPara fila = 1 Hasta n Hacer\n\t\tPara col = 1 Hasta fila Hacer\n\t\t\tEscribir Sin Saltar col\n\t\tFinPara\n\t\tEscribir ""\n\tFinPara\nFinAlgoritmo' },
   ]
 });
 
@@ -2393,31 +2397,31 @@ ${C(`Algoritmo MayorYMenor
 	Leer n
 	Escribir "Número 1:"
 	Leer x
-	mayor <- x
-	menor <- x
-	Para i <- 2 Hasta n Hacer
+	mayor = x
+	menor = x
+	Para i = 2 Hasta n Hacer
 		Escribir "Número ", i, ":"
 		Leer x
 		Si x > mayor Entonces
-			mayor <- x
+			mayor = x
 		FinSi
 		Si x < menor Entonces
-			menor <- x
+			menor = x
 		FinSi
 	FinPara
 	Escribir "Mayor: ", mayor, " / Menor: ", menor
 FinAlgoritmo`)}
-${WARN("No inicialices <code>mayor &lt;- 0</code>: si todos los números son negativos, el resultado sería 0, que ni siquiera está en la lista. Usa el primer valor.")}` },
+${WARN("No inicialices <code>mayor = 0</code>: si todos los números son negativos, el resultado sería 0, que ni siquiera está en la lista. Usa el primer valor.")}` },
     { h: "Bandera (indicador)", body: `
 <p>Una <b>bandera</b> es una variable lógica que «se levanta» cuando ocurre algo. Responde preguntas de sí/no como «¿apareció algún número negativo?».</p>
 ${C(`Algoritmo HayNegativo
 	Definir x Como Entero
 	Definir hayNegativo Como Logico
-	hayNegativo <- Falso
-	Para i <- 1 Hasta 4 Hacer
+	hayNegativo = Falso
+	Para i = 1 Hasta 4 Hacer
 		Leer x
 		Si x < 0 Entonces
-			hayNegativo <- Verdadero
+			hayNegativo = Verdadero
 		FinSi
 	FinPara
 	Si hayNegativo Entonces
@@ -2430,14 +2434,14 @@ FinAlgoritmo`)}
 ${C(`Algoritmo Primo
 	Definir n Como Entero
 	Definir esPrimo Como Logico
-	n <- 29
-	esPrimo <- n > 1
-	d <- 2
+	n = 29
+	esPrimo = n > 1
+	d = 2
 	Mientras d * d <= n Y esPrimo Hacer
-		Si n MOD d = 0 Entonces
-			esPrimo <- Falso
+		Si n MOD d == 0 Entonces
+			esPrimo = Falso
 		FinSi
-		d <- d + 1
+		d = d + 1
 	FinMientras
 	Si esPrimo Entonces
 		Escribir n, " es primo"
@@ -2449,11 +2453,11 @@ FinAlgoritmo`)}` },
 <p>Combinando <code>MOD 10</code> (último dígito) y <code>trunc(n / 10)</code> (quitar el último dígito) puedes procesar un número cifra por cifra:</p>
 ${C(`Algoritmo SumaDigitos
 	Definir n, suma Como Entero
-	n <- 4827
-	suma <- 0
+	n = 4827
+	suma = 0
 	Mientras n > 0 Hacer
-		suma <- suma + n MOD 10
-		n <- trunc(n / 10)
+		suma = suma + n MOD 10
+		n = trunc(n / 10)
 	FinMientras
 	Escribir "La suma de los dígitos es ", suma
 FinAlgoritmo`)}` },
@@ -2464,9 +2468,9 @@ FinAlgoritmo`)}` },
 <ol><li><b>Reproduce:</b> encuentra una entrada concreta que da mal.</li><li><b>Predice:</b> ¿qué debería dar? Calcúlalo a mano.</li><li><b>Observa:</b> usa <b>Paso a paso</b> o agrega <code>Escribir</code> temporales para ver los valores intermedios.</li><li><b>Compara:</b> ¿en qué línea lo que pasa deja de coincidir con lo que esperabas? Ahí está el bug.</li></ol>
 <p>Este programa debería mostrar el promedio de 1, 2 y 3 (que es 2), pero no lo hace. Ejecútalo paso a paso y encuentra el error:</p>
 ${C(`Algoritmo PromedioConBug
-	suma <- 0
-	Para i <- 1 Hasta 3 Hacer
-		suma <- suma + i
+	suma = 0
+	Para i = 1 Hasta 3 Hacer
+		suma = suma + i
 	FinPara
 	Escribir "Promedio: ", suma / i
 FinAlgoritmo`)}
@@ -2475,28 +2479,28 @@ ${PRO("Depurar es probablemente lo que más tiempo ocupa en el trabajo de un pro
   ],
   cheat: [
     { h: "Máximo", body: CN(`Leer x
-mayor <- x            // primer valor, no 0
-Para i <- 2 Hasta n Hacer
+mayor = x            // primer valor, no 0
+Para i = 2 Hasta n Hacer
 	Leer x
 	Si x > mayor Entonces
-		mayor <- x
+		mayor = x
 	FinSi
 FinPara`) },
-    { h: "Bandera", body: CN(`encontrado <- Falso
+    { h: "Bandera", body: CN(`encontrado = Falso
 // dentro del bucle:
 Si condición Entonces
-	encontrado <- Verdadero
+	encontrado = Verdadero
 FinSi`) },
-    { h: "Dígitos", body: CN(`ultimo <- n MOD 10
-n <- trunc(n / 10)    // quita el último`) },
+    { h: "Dígitos", body: CN(`ultimo = n MOD 10
+n = trunc(n / 10)    // quita el último`) },
     { h: "Depurar", body: `<ol><li>Reproduce con un caso concreto.</li><li>Calcula a mano qué debería dar.</li><li>Paso a paso o <code>Escribir</code> temporales.</li><li>Busca la primera línea donde no coincide.</li></ol>` },
   ],
   quiz: [
-    { q: "Para buscar el menor de una lista, ¿cómo inicializas <code>menor</code>?", opts: ["menor <- 0", "menor <- 999", "menor <- primer valor", "No hace falta"], a: 2, why: "Cualquier número fijo puede fallar con ciertos datos. El primer valor siempre es seguro." },
+    { q: "Para buscar el menor de una lista, ¿cómo inicializas <code>menor</code>?", opts: ["menor = 0", "menor = 999", "menor = primer valor", "No hace falta"], a: 2, why: "Cualquier número fijo puede fallar con ciertos datos. El primer valor siempre es seguro." },
     { q: "¿Qué tipo de dato es una bandera normalmente?", opts: ["Entero", "Cadena", "Logico", "Real"], a: 2, why: "Indica sí/no: es lógica." },
     { q: "¿Qué da <code>trunc(593 / 10)</code>?", opts: ["3", "59", "59.3", "593"], a: 1, why: "593/10 = 59.3, trunc quita los decimales: 59. Quita el último dígito." },
     { q: "El programa funciona pero da un resultado incorrecto. Es un error de...", opts: ["Sintaxis", "Lógica", "Hardware", "Internet"], a: 1, why: "Los de sintaxis impiden ejecutar; los de lógica dan resultados equivocados." },
-    { q: "¿Qué muestra?", code: "c <- 0\nn <- 1000\nMientras n > 1 Hacer\n\tn <- n / 10\n\tc <- c + 1\nFinMientras\nEscribir c", opts: ["2", "3", "4", "1000"], a: 1, why: "1000 → 100 → 10 → 1: tres divisiones." },
+    { q: "¿Qué muestra?", code: "c = 0\nn = 1000\nMientras n > 1 Hacer\n\tn = n / 10\n\tc = c + 1\nFinMientras\nEscribir c", opts: ["2", "3", "4", "1000"], a: 1, why: "1000 → 100 → 10 → 1: tres divisiones." },
     { q: "¿Cuál es el primer paso para corregir un error de lógica?", opts: ["Reescribir todo", "Encontrar una entrada concreta que produzca el error", "Agregar más bucles", "Cambiar los nombres de variables"], a: 1, why: "Sin un caso que falle de forma reproducible, es difícil saber qué buscar." },
   ],
   exercises: [
@@ -2504,20 +2508,20 @@ n <- trunc(n / 10)    // quita el último`) },
       text: "Lee primero la cantidad de alumnos N y luego N notas. Muestra como última línea <code>Nota más alta: X</code>.",
       starter: "Algoritmo NotaMax\n\tDefinir n Como Entero\n\tDefinir nota, maxima Como Real\n\t\nFinAlgoritmo",
       tests: [{ in: ["3", "7", "9.5", "6"], out: "Nota más alta: 9.5" }, { in: ["1", "4"], out: "Nota más alta: 4" }, { in: ["4", "2", "3", "1", "8"], out: "Nota más alta: 8" }],
-      hint: "Lee la primera nota fuera del bucle y úsala como máxima inicial. Luego Para i <- 2 Hasta n.",
-      solution: 'Algoritmo NotaMax\n\tDefinir n Como Entero\n\tDefinir nota, maxima Como Real\n\tLeer n\n\tLeer nota\n\tmaxima <- nota\n\tPara i <- 2 Hasta n Hacer\n\t\tLeer nota\n\t\tSi nota > maxima Entonces\n\t\t\tmaxima <- nota\n\t\tFinSi\n\tFinPara\n\tEscribir "Nota más alta: ", maxima\nFinAlgoritmo' },
+      hint: "Lee la primera nota fuera del bucle y úsala como máxima inicial. Luego Para i = 2 Hasta n.",
+      solution: 'Algoritmo NotaMax\n\tDefinir n Como Entero\n\tDefinir nota, maxima Como Real\n\tLeer n\n\tLeer nota\n\tmaxima = nota\n\tPara i = 2 Hasta n Hacer\n\t\tLeer nota\n\t\tSi nota > maxima Entonces\n\t\t\tmaxima = nota\n\t\tFinSi\n\tFinPara\n\tEscribir "Nota más alta: ", maxima\nFinAlgoritmo' },
     { id: "ex09b", title: "¿Es primo?", lang: "pseudo",
       text: "Lee un número entero y muestra <code>Primo</code> o <code>No primo</code>. Recuerda: 1 no es primo, 2 sí.",
       starter: "Algoritmo EsPrimo\n\tDefinir n, d Como Entero\n\tDefinir primo Como Logico\n\tLeer n\n\t\nFinAlgoritmo",
       tests: [{ in: ["7"], out: "Primo" }, { in: ["12"], out: "No primo" }, { in: ["1"], out: "No primo" }, { in: ["2"], out: "Primo" }, { in: ["97"], out: "Primo" }],
-      hint: "Bandera primo <- n > 1. Prueba divisores d desde 2 mientras d * d <= n. Si n MOD d = 0, baja la bandera.",
-      solution: 'Algoritmo EsPrimo\n\tDefinir n, d Como Entero\n\tDefinir primo Como Logico\n\tLeer n\n\tprimo <- n > 1\n\td <- 2\n\tMientras d * d <= n Hacer\n\t\tSi n MOD d = 0 Entonces\n\t\t\tprimo <- Falso\n\t\tFinSi\n\t\td <- d + 1\n\tFinMientras\n\tSi primo Entonces\n\t\tEscribir "Primo"\n\tSiNo\n\t\tEscribir "No primo"\n\tFinSi\nFinAlgoritmo' },
+      hint: "Bandera primo = n > 1. Prueba divisores d desde 2 mientras d * d <= n. Si n MOD d == 0, baja la bandera.",
+      solution: 'Algoritmo EsPrimo\n\tDefinir n, d Como Entero\n\tDefinir primo Como Logico\n\tLeer n\n\tprimo = n > 1\n\td = 2\n\tMientras d * d <= n Hacer\n\t\tSi n MOD d == 0 Entonces\n\t\t\tprimo = Falso\n\t\tFinSi\n\t\td = d + 1\n\tFinMientras\n\tSi primo Entonces\n\t\tEscribir "Primo"\n\tSiNo\n\t\tEscribir "No primo"\n\tFinSi\nFinAlgoritmo' },
     { id: "ex09c", title: "Invertir un número", lang: "pseudo",
       text: "Lee un número entero positivo y muéstralo con sus dígitos al revés. Ejemplo: 1234 → <code>4321</code>.",
       starter: "Algoritmo Invertir\n\tDefinir n, invertido Como Entero\n\tLeer n\n\t\nFinAlgoritmo",
       tests: [{ in: ["1234"], out: "4321" }, { in: ["5"], out: "5" }, { in: ["908"], out: "809" }],
-      hint: "invertido empieza en 0. En cada vuelta: invertido <- invertido * 10 + n MOD 10, y n <- trunc(n / 10).",
-      solution: 'Algoritmo Invertir\n\tDefinir n, invertido Como Entero\n\tLeer n\n\tinvertido <- 0\n\tMientras n > 0 Hacer\n\t\tinvertido <- invertido * 10 + n MOD 10\n\t\tn <- trunc(n / 10)\n\tFinMientras\n\tEscribir invertido\nFinAlgoritmo' },
+      hint: "invertido empieza en 0. En cada vuelta: invertido = invertido * 10 + n MOD 10, y n = trunc(n / 10).",
+      solution: 'Algoritmo Invertir\n\tDefinir n, invertido Como Entero\n\tLeer n\n\tinvertido = 0\n\tMientras n > 0 Hacer\n\t\tinvertido = invertido * 10 + n MOD 10\n\t\tn = trunc(n / 10)\n\tFinMientras\n\tEscribir invertido\nFinAlgoritmo' },
   ]
 });
 
@@ -2532,24 +2536,24 @@ MOD({
   exam: {
     extra: [
       { q: "Con <code>Dimension v[6]</code>, ¿cuál es la última posición válida?", opts: ["6", "5", "7", "0"], a: 1, why: "Las posiciones van de 0 a 5 (6 posiciones en total)." },
-      { q: "¿Qué muestra?", code: "Dimension v[3]\nv[0] <- 4\nv[1] <- v[0] * 2\nv[2] <- v[0] + v[1]\nEscribir v[2]", opts: ["4", "8", "12", "6"], a: 2, why: "v[0]=4, v[1]=8, v[2]=4+8=12." },
+      { q: "¿Qué muestra?", code: "Dimension v[3]\nv[0] = 4\nv[1] = v[0] * 2\nv[2] = v[0] + v[1]\nEscribir v[2]", opts: ["4", "8", "12", "6"], a: 2, why: "v[0]=4, v[1]=8, v[2]=4+8=12." },
       { q: "¿Qué devuelve <code>Longitud(\"Hola mundo\")</code>?", opts: ["9", "10", "2", "11"], a: 1, why: "Cuenta todos los caracteres, el espacio incluido: 10." },
       { q: "¿Cuál es la principal ventaja de usar funciones?", opts: ["El programa corre más rápido", "Reutilizar código y dividir el problema en partes", "No hace falta usar variables", "Evitan todos los errores"], a: 1, why: "Escribes una vez, usas muchas, y cada parte se entiende por separado." },
-      { q: "¿Qué muestra?", code: "Funcion r <- triple(x)\n\tr <- x * 3\nFinFuncion\nAlgoritmo P\n\tEscribir triple(triple(2))\nFinAlgoritmo", opts: ["6", "9", "18", "12"], a: 2, why: "triple(2)=6 y triple(6)=18." },
+      { q: "¿Qué muestra?", code: "Funcion r = triple(x)\n\tr = x * 3\nFinFuncion\nAlgoritmo P\n\tEscribir triple(triple(2))\nFinAlgoritmo", opts: ["6", "9", "18", "12"], a: 2, why: "triple(2)=6 y triple(6)=18." },
       { q: "La búsqueda binaria requiere que la lista esté...", opts: ["Vacía", "Ordenada", "Con números pares", "Al revés"], a: 1, why: "Descarta la mitad en cada paso comparando con el medio; solo funciona si está ordenada." },
       { q: "En el ordenamiento burbuja, ¿qué se hace cuando dos elementos vecinos están en el orden incorrecto?", opts: ["Se borran", "Se intercambian", "Se suman", "Se termina el algoritmo"], a: 1, why: "Se intercambian, y así los mayores van «flotando» al final." },
       { q: "Una variable creada dentro de una función...", opts: ["Se puede usar en todo el programa", "Solo existe dentro de esa función", "Se guarda para siempre", "Es siempre de tipo Cadena"], a: 1, why: "Es una variable local: su ámbito es la función." },
       { fill: true, q: "¿Qué devuelve <code>Subcadena(\"programa\", 0, 3)</code>?", a: ["prog"], why: "Desde la posición 0 hasta la 3 inclusive: p-r-o-g." },
-      { q: "Para recorrer todas las posiciones de <code>Dimension notas[n]</code> usas...", opts: ["Para i <- 1 Hasta n", "Para i <- 0 Hasta n - 1", "Para i <- 0 Hasta n", "Para i <- n Hasta n"], a: 1, why: "Las posiciones van de 0 a n-1." },
+      { q: "Para recorrer todas las posiciones de <code>Dimension notas[n]</code> usas...", opts: ["Para i = 1 Hasta n", "Para i = 0 Hasta n - 1", "Para i = 0 Hasta n", "Para i = n Hasta n"], a: 1, why: "Las posiciones van de 0 a n-1." },
     ],
     challenge: {
       id: "ex_m3", title: "Estadísticas de una lista",
       text: "Lee N y luego N números enteros en un arreglo. Escribe una función <code>Promedio</code> y muestra como últimas dos líneas:<br><code>Promedio: X</code><br><code>Mayores al promedio: K</code><br>donde K es cuántos números superan el promedio.",
       lang: "pseudo",
-      starter: "Funcion p <- Promedio(v, n)\n\t// completa\nFinFuncion\n\nAlgoritmo Estadisticas\n\tDefinir n Como Entero\n\tLeer n\n\tDimension datos[n]\n\t\nFinAlgoritmo",
+      starter: "Funcion p = Promedio(v, n)\n\t// completa\nFinFuncion\n\nAlgoritmo Estadisticas\n\tDefinir n Como Entero\n\tLeer n\n\tDimension datos[n]\n\t\nFinAlgoritmo",
       tests: [{ in: ["4", "2", "4", "6", "8"], out: "Promedio: 5\nMayores al promedio: 2" }, { in: ["3", "10", "10", "10"], out: "Promedio: 10\nMayores al promedio: 0" }, { in: ["5", "1", "2", "3", "4", "100"], out: "Promedio: 22\nMayores al promedio: 1" }],
       hint: "La función suma v[0] a v[n-1] y divide entre n. En el algoritmo, guarda el promedio en una variable y recorre de nuevo el arreglo contando.",
-      solution: 'Funcion p <- Promedio(v, n)\n\tsuma <- 0\n\tPara i <- 0 Hasta n - 1 Hacer\n\t\tsuma <- suma + v[i]\n\tFinPara\n\tp <- suma / n\nFinFuncion\n\nAlgoritmo Estadisticas\n\tDefinir n Como Entero\n\tLeer n\n\tDimension datos[n]\n\tPara i <- 0 Hasta n - 1 Hacer\n\t\tLeer datos[i]\n\tFinPara\n\tprom <- Promedio(datos, n)\n\tc <- 0\n\tPara i <- 0 Hasta n - 1 Hacer\n\t\tSi datos[i] > prom Entonces\n\t\t\tc <- c + 1\n\t\tFinSi\n\tFinPara\n\tEscribir "Promedio: ", prom\n\tEscribir "Mayores al promedio: ", c\nFinAlgoritmo'
+      solution: 'Funcion p = Promedio(v, n)\n\tsuma = 0\n\tPara i = 0 Hasta n - 1 Hacer\n\t\tsuma = suma + v[i]\n\tFinPara\n\tp = suma / n\nFinFuncion\n\nAlgoritmo Estadisticas\n\tDefinir n Como Entero\n\tLeer n\n\tDimension datos[n]\n\tPara i = 0 Hasta n - 1 Hacer\n\t\tLeer datos[i]\n\tFinPara\n\tprom = Promedio(datos, n)\n\tc = 0\n\tPara i = 0 Hasta n - 1 Hacer\n\t\tSi datos[i] > prom Entonces\n\t\t\tc = c + 1\n\t\tFinSi\n\tFinPara\n\tEscribir "Promedio: ", prom\n\tEscribir "Mayores al promedio: ", c\nFinAlgoritmo'
     }
   }
 });
@@ -2563,10 +2567,10 @@ L({
 ${IDEA("Un arreglo es como una fila de casilleros numerados. Todos se llaman <code>notas</code>, y para elegir uno dices su número: <code>notas[0]</code>, <code>notas[1]</code>...")}
 ${C(`Algoritmo PrimerArreglo
 	Dimension notas[4]
-	notas[0] <- 7
-	notas[1] <- 9
-	notas[2] <- 5
-	notas[3] <- 10
+	notas[0] = 7
+	notas[1] = 9
+	notas[2] = 5
+	notas[3] = 10
 	Escribir "La segunda nota es ", notas[1]
 	Escribir notas
 FinAlgoritmo`)}
@@ -2575,20 +2579,20 @@ ${WARN("Las posiciones empiezan en <b>0</b>. Un arreglo de 4 posiciones tiene lo
 <p>Si usas un índice que no existe, obtienes un error. Pruébalo:</p>
 ${C(`Algoritmo FueraDeRango
 	Dimension v[3]
-	v[3] <- 1
+	v[3] = 1
 FinAlgoritmo`)}` },
     { h: "Recorrer un arreglo con Para", body: `
 <p>La combinación más poderosa: un arreglo y un bucle Para que pase por todas sus posiciones. El índice deja de ser un número fijo y pasa a ser la variable del bucle:</p>
 ${C(`Algoritmo CargarYMostrar
 	Definir n Como Entero
-	n <- 5
+	n = 5
 	Dimension cuadrados[n]
 	// Cargar
-	Para i <- 0 Hasta n - 1 Hacer
-		cuadrados[i] <- i * i
+	Para i = 0 Hasta n - 1 Hacer
+		cuadrados[i] = i * i
 	FinPara
 	// Mostrar
-	Para i <- 0 Hasta n - 1 Hacer
+	Para i = 0 Hasta n - 1 Hacer
 		Escribir "Posición ", i, ": ", cuadrados[i]
 	FinPara
 FinAlgoritmo`)}
@@ -2597,22 +2601,22 @@ FinAlgoritmo`)}
 <p>Todos los patrones que aprendiste (acumulador, contador, máximo) funcionan con arreglos:</p>
 ${C(`Algoritmo Operaciones
 	Dimension precios[5]
-	precios[0] <- 120
-	precios[1] <- 85
-	precios[2] <- 300
-	precios[3] <- 45
-	precios[4] <- 210
+	precios[0] = 120
+	precios[1] = 85
+	precios[2] = 300
+	precios[3] = 45
+	precios[4] = 210
 
-	total <- 0
-	caro <- precios[0]
-	baratos <- 0
-	Para i <- 0 Hasta 4 Hacer
-		total <- total + precios[i]
+	total = 0
+	caro = precios[0]
+	baratos = 0
+	Para i = 0 Hasta 4 Hacer
+		total = total + precios[i]
 		Si precios[i] > caro Entonces
-			caro <- precios[i]
+			caro = precios[i]
 		FinSi
 		Si precios[i] < 100 Entonces
-			baratos <- baratos + 1
+			baratos = baratos + 1
 		FinSi
 	FinPara
 	Escribir "Total: ", total
@@ -2623,18 +2627,18 @@ FinAlgoritmo`)}
 <p><b>Buscar un elemento:</b> recorre y compara, usando una bandera o guardando la posición:</p>
 ${C(`Algoritmo Buscar
 	Dimension nombres[4]
-	nombres[0] <- "Ana"
-	nombres[1] <- "Luis"
-	nombres[2] <- "Sofía"
-	nombres[3] <- "Pedro"
-	buscado <- "Sofía"
-	posicion <- -1
-	Para i <- 0 Hasta 3 Hacer
-		Si nombres[i] = buscado Entonces
-			posicion <- i
+	nombres[0] = "Ana"
+	nombres[1] = "Luis"
+	nombres[2] = "Sofía"
+	nombres[3] = "Pedro"
+	buscado = "Sofía"
+	posicion = -1
+	Para i = 0 Hasta 3 Hacer
+		Si nombres[i] == buscado Entonces
+			posicion = i
 		FinSi
 	FinPara
-	Si posicion = -1 Entonces
+	Si posicion == -1 Entonces
 		Escribir buscado, " no está"
 	SiNo
 		Escribir buscado, " está en la posición ", posicion
@@ -2646,14 +2650,14 @@ ${TIP("Usar <code>-1</code> para indicar «no encontrado» es una convención mu
 ${C(`Algoritmo Matriz
 	Dimension m[3, 4]
 	// Llenar: cada celda = fila * 10 + columna
-	Para f <- 0 Hasta 2 Hacer
-		Para c <- 0 Hasta 3 Hacer
-			m[f, c] <- f * 10 + c
+	Para f = 0 Hasta 2 Hacer
+		Para c = 0 Hasta 3 Hacer
+			m[f, c] = f * 10 + c
 		FinPara
 	FinPara
 	// Mostrar como tabla
-	Para f <- 0 Hasta 2 Hacer
-		Para c <- 0 Hasta 3 Hacer
+	Para f = 0 Hasta 2 Hacer
+		Para c = 0 Hasta 3 Hacer
 			Escribir Sin Saltar m[f, c], "	"
 		FinPara
 		Escribir ""
@@ -2663,48 +2667,48 @@ ${PRO("Las matrices aparecen en tableros de juegos (ta-te-ti, ajedrez), hojas de
   ],
   cheat: [
     { h: "Crear y usar", body: CN(`Dimension v[5]        // posiciones 0 a 4
-v[0] <- 10
+v[0] = 10
 Escribir v[0]
 Dimension m[3, 3]     // matriz 3x3
-m[1, 2] <- 7`) },
-    { h: "Recorrer", body: CN(`Para i <- 0 Hasta n - 1 Hacer
+m[1, 2] = 7`) },
+    { h: "Recorrer", body: CN(`Para i = 0 Hasta n - 1 Hacer
 	Escribir v[i]
 FinPara`) },
-    { h: "Buscar", body: CN(`pos <- -1
-Para i <- 0 Hasta n - 1 Hacer
-	Si v[i] = buscado Entonces
-		pos <- i
+    { h: "Buscar", body: CN(`pos = -1
+Para i = 0 Hasta n - 1 Hacer
+	Si v[i] == buscado Entonces
+		pos = i
 	FinSi
 FinPara`) },
     { h: "Recuerda", body: `<ul><li>Índices desde <b>0</b> hasta <b>tamaño − 1</b>.</li><li>Índice fuera de rango = error.</li><li>Matriz: dos índices y dos bucles anidados.</li></ul>` },
   ],
   quiz: [
     { q: "Con <code>Dimension datos[10]</code>, ¿cuántos valores puede guardar?", opts: ["9", "10", "11", "Ilimitados"], a: 1, why: "10 posiciones, de la 0 a la 9." },
-    { q: "¿Qué muestra?", code: "Dimension v[3]\nv[0] <- 5\nv[1] <- 3\nv[2] <- v[0] - v[1]\nEscribir v[2]", opts: ["5", "3", "2", "8"], a: 2, why: "v[2] = 5 - 3 = 2." },
-    { q: "¿Qué ocurre con <code>v[5] &lt;- 1</code> si <code>v</code> tiene 5 posiciones?", opts: ["Guarda en la última posición", "Error: índice fuera de rango", "Agranda el arreglo", "Nada"], a: 1, why: "Las posiciones válidas son 0..4." },
-    { q: "¿Qué muestra?", code: "Dimension v[4]\nPara i <- 0 Hasta 3 Hacer\n\tv[i] <- i * 2\nFinPara\nEscribir v[3]", opts: ["3", "6", "8", "4"], a: 1, why: "v[3] = 3 * 2 = 6." },
+    { q: "¿Qué muestra?", code: "Dimension v[3]\nv[0] = 5\nv[1] = 3\nv[2] = v[0] - v[1]\nEscribir v[2]", opts: ["5", "3", "2", "8"], a: 2, why: "v[2] = 5 - 3 = 2." },
+    { q: "¿Qué ocurre con <code>v[5] = 1</code> si <code>v</code> tiene 5 posiciones?", opts: ["Guarda en la última posición", "Error: índice fuera de rango", "Agranda el arreglo", "Nada"], a: 1, why: "Las posiciones válidas son 0..4." },
+    { q: "¿Qué muestra?", code: "Dimension v[4]\nPara i = 0 Hasta 3 Hacer\n\tv[i] = i * 2\nFinPara\nEscribir v[3]", opts: ["3", "6", "8", "4"], a: 1, why: "v[3] = 3 * 2 = 6." },
     { q: "En <code>m[2, 1]</code>, ¿qué indica el 2?", opts: ["La columna", "La fila", "El valor", "El tamaño"], a: 1, why: "Por convención, primero la fila y luego la columna." },
-    { q: "¿Para qué sirve guardar <code>posicion &lt;- -1</code> antes de buscar?", opts: ["Para que el bucle empiece al revés", "Para indicar «no encontrado» si nunca se cambia", "Para borrar el arreglo", "No sirve"], a: 1, why: "-1 no es una posición válida, así que si sigue en -1 sabes que no se encontró." },
+    { q: "¿Para qué sirve guardar <code>posicion = -1</code> antes de buscar?", opts: ["Para que el bucle empiece al revés", "Para indicar «no encontrado» si nunca se cambia", "Para borrar el arreglo", "No sirve"], a: 1, why: "-1 no es una posición válida, así que si sigue en -1 sabes que no se encontró." },
   ],
   exercises: [
     { id: "ex10a", title: "Al revés", lang: "pseudo",
       text: "Lee 5 números en un arreglo y muéstralos en orden inverso, uno por línea.",
       starter: "Algoritmo AlReves\n\tDimension v[5]\n\t\nFinAlgoritmo",
       tests: [{ in: ["1", "2", "3", "4", "5"], out: "5\n4\n3\n2\n1" }, { in: ["9", "0", "7", "3", "8"], out: "8\n3\n7\n0\n9" }],
-      hint: "Carga con Para i <- 0 Hasta 4, y muestra con Para i <- 4 Hasta 0 Con Paso -1.",
-      solution: 'Algoritmo AlReves\n\tDimension v[5]\n\tPara i <- 0 Hasta 4 Hacer\n\t\tLeer v[i]\n\tFinPara\n\tPara i <- 4 Hasta 0 Con Paso -1 Hacer\n\t\tEscribir v[i]\n\tFinPara\nFinAlgoritmo' },
+      hint: "Carga con Para i = 0 Hasta 4, y muestra con Para i = 4 Hasta 0 Con Paso -1.",
+      solution: 'Algoritmo AlReves\n\tDimension v[5]\n\tPara i = 0 Hasta 4 Hacer\n\t\tLeer v[i]\n\tFinPara\n\tPara i = 4 Hasta 0 Con Paso -1 Hacer\n\t\tEscribir v[i]\n\tFinPara\nFinAlgoritmo' },
     { id: "ex10b", title: "¿Cuántas veces aparece?", lang: "pseudo",
       text: "Lee 6 números en un arreglo y después un número a buscar. Muestra como última línea <code>Aparece K veces</code>.",
       starter: "Algoritmo Apariciones\n\tDimension v[6]\n\t\nFinAlgoritmo",
       tests: [{ in: ["3", "1", "3", "7", "3", "2", "3"], out: "Aparece 3 veces" }, { in: ["1", "2", "3", "4", "5", "6", "9"], out: "Aparece 0 veces" }],
       hint: "Primero un Para para leer. Luego Leer buscado. Luego otro Para con un contador.",
-      solution: 'Algoritmo Apariciones\n\tDimension v[6]\n\tPara i <- 0 Hasta 5 Hacer\n\t\tLeer v[i]\n\tFinPara\n\tLeer buscado\n\tc <- 0\n\tPara i <- 0 Hasta 5 Hacer\n\t\tSi v[i] = buscado Entonces\n\t\t\tc <- c + 1\n\t\tFinSi\n\tFinPara\n\tEscribir "Aparece ", c, " veces"\nFinAlgoritmo' },
+      solution: 'Algoritmo Apariciones\n\tDimension v[6]\n\tPara i = 0 Hasta 5 Hacer\n\t\tLeer v[i]\n\tFinPara\n\tLeer buscado\n\tc = 0\n\tPara i = 0 Hasta 5 Hacer\n\t\tSi v[i] == buscado Entonces\n\t\t\tc = c + 1\n\t\tFinSi\n\tFinPara\n\tEscribir "Aparece ", c, " veces"\nFinAlgoritmo' },
     { id: "ex10c", title: "Suma de una matriz", lang: "pseudo",
       text: "Lee una matriz de 2 filas y 3 columnas (6 números, fila por fila). Muestra la suma de cada fila con el formato <code>Fila 0: X</code> y <code>Fila 1: Y</code>.",
       starter: "Algoritmo SumaFilas\n\tDimension m[2, 3]\n\t\nFinAlgoritmo",
       tests: [{ in: ["1", "2", "3", "4", "5", "6"], out: "Fila 0: 6\nFila 1: 15" }, { in: ["0", "0", "1", "10", "10", "10"], out: "Fila 0: 1\nFila 1: 30" }],
       hint: "Dos Para anidados para leer. Para sumar: por cada fila, un acumulador que empieza en 0 y recorre las columnas.",
-      solution: 'Algoritmo SumaFilas\n\tDimension m[2, 3]\n\tPara f <- 0 Hasta 1 Hacer\n\t\tPara c <- 0 Hasta 2 Hacer\n\t\t\tLeer m[f, c]\n\t\tFinPara\n\tFinPara\n\tPara f <- 0 Hasta 1 Hacer\n\t\ts <- 0\n\t\tPara c <- 0 Hasta 2 Hacer\n\t\t\ts <- s + m[f, c]\n\t\tFinPara\n\t\tEscribir "Fila ", f, ": ", s\n\tFinPara\nFinAlgoritmo' },
+      solution: 'Algoritmo SumaFilas\n\tDimension m[2, 3]\n\tPara f = 0 Hasta 1 Hacer\n\t\tPara c = 0 Hasta 2 Hacer\n\t\t\tLeer m[f, c]\n\t\tFinPara\n\tFinPara\n\tPara f = 0 Hasta 1 Hacer\n\t\ts = 0\n\t\tPara c = 0 Hasta 2 Hacer\n\t\t\ts = s + m[f, c]\n\t\tFinPara\n\t\tEscribir "Fila ", f, ": ", s\n\tFinPara\nFinAlgoritmo' },
   ]
 });
 
@@ -2718,7 +2722,7 @@ ${TABLE(["Posición", "0", "1", "2", "3"], [["Carácter", "H", "o", "l", "a"]])}
 <p>Funciones disponibles:</p>
 ${TABLE(["Función", "Qué hace", "Ejemplo → resultado"], [["<code>Longitud(t)</code>", "Cantidad de caracteres", "<code>Longitud(\"Hola\")</code> → 4"], ["<code>Subcadena(t, desde, hasta)</code>", "Parte del texto (ambas posiciones incluidas)", "<code>Subcadena(\"Hola\", 1, 2)</code> → \"ol\""], ["<code>Mayusculas(t)</code>", "Todo en mayúsculas", "→ \"HOLA\""], ["<code>Minusculas(t)</code>", "Todo en minúsculas", "→ \"hola\""], ["<code>ConvertirANumero(t)</code>", "Texto a número", "<code>\"42\"</code> → 42"], ["<code>ConvertirATexto(n)</code>", "Número a texto", "42 → <code>\"42\"</code>"]])}
 ${C(`Algoritmo Funciones
-	t <- "Programar"
+	t = "Programar"
 	Escribir Longitud(t)
 	Escribir Mayusculas(t)
 	Escribir Subcadena(t, 0, 2)
@@ -2729,12 +2733,12 @@ FinAlgoritmo`)}` },
 <p>Con un Para de 0 a <code>Longitud(t) - 1</code> y <code>Subcadena(t, i, i)</code> obtienes cada letra:</p>
 ${C(`Algoritmo ContarVocales
 	Definir frase, letra Como Cadena
-	frase <- "Aprender a programar"
-	vocales <- 0
-	Para i <- 0 Hasta Longitud(frase) - 1 Hacer
-		letra <- Minusculas(Subcadena(frase, i, i))
-		Si letra = "a" O letra = "e" O letra = "i" O letra = "o" O letra = "u" Entonces
-			vocales <- vocales + 1
+	frase = "Aprender a programar"
+	vocales = 0
+	Para i = 0 Hasta Longitud(frase) - 1 Hacer
+		letra = Minusculas(Subcadena(frase, i, i))
+		Si letra == "a" O letra == "e" O letra == "i" O letra == "o" O letra == "u" Entonces
+			vocales = vocales + 1
 		FinSi
 	FinPara
 	Escribir "La frase tiene ", vocales, " vocales"
@@ -2744,13 +2748,13 @@ FinAlgoritmo`)}
 <p>Puedes armar un texto nuevo agregando partes con <code>+</code>. Por ejemplo, invertir una palabra:</p>
 ${C(`Algoritmo Invertir
 	Definir palabra, invertida Como Cadena
-	palabra <- "reconocer"
-	invertida <- ""
-	Para i <- Longitud(palabra) - 1 Hasta 0 Con Paso -1 Hacer
-		invertida <- invertida + Subcadena(palabra, i, i)
+	palabra = "reconocer"
+	invertida = ""
+	Para i = Longitud(palabra) - 1 Hasta 0 Con Paso -1 Hacer
+		invertida = invertida + Subcadena(palabra, i, i)
 	FinPara
 	Escribir invertida
-	Si invertida = palabra Entonces
+	Si invertida == palabra Entonces
 		Escribir "¡Es un palíndromo!"
 	FinSi
 FinAlgoritmo`)}
@@ -2764,17 +2768,17 @@ Mayusculas("Hola")          // "HOLA"
 Minusculas("Hola")          // "hola"
 ConvertirANumero("42")      // 42
 ConvertirATexto(42)         // "42"`) },
-    { h: "Recorrer letras", body: CN(`Para i <- 0 Hasta Longitud(t) - 1 Hacer
-	letra <- Subcadena(t, i, i)
+    { h: "Recorrer letras", body: CN(`Para i = 0 Hasta Longitud(t) - 1 Hacer
+	letra = Subcadena(t, i, i)
 FinPara`) },
     { h: "Recuerda", body: `<ul><li>Posiciones desde 0.</li><li>Mayúsculas y minúsculas son distintas al comparar.</li><li><code>\"\"</code> es el texto vacío.</li></ul>` },
   ],
   quiz: [
     { q: "¿Qué devuelve <code>Longitud(\"Sol y mar\")</code>?", opts: ["7", "9", "3", "8"], a: 1, why: "S-o-l-espacio-y-espacio-m-a-r: 9 caracteres." },
     { q: "¿Qué devuelve <code>Subcadena(\"computadora\", 3, 5)</code>?", opts: ["put", "mpu", "puta", "omp"], a: 0, why: "Posiciones 3, 4 y 5: p, u, t." },
-    { q: "¿Qué da <code>\"Hola\" = \"hola\"</code>?", opts: ["VERDADERO", "FALSO", "Error", "4"], a: 1, why: "Las mayúsculas cuentan: H y h son caracteres distintos." },
+    { q: "¿Qué da <code>\"Hola\" == \"hola\"</code>?", opts: ["VERDADERO", "FALSO", "Error", "4"], a: 1, why: "Las mayúsculas cuentan: H y h son caracteres distintos." },
     { q: "¿Cómo obtienes la primera letra de <code>nombre</code>?", opts: ["Subcadena(nombre, 1, 1)", "Subcadena(nombre, 0, 0)", "nombre[1]", "Longitud(nombre)"], a: 1, why: "La primera letra está en la posición 0." },
-    { q: "¿Qué muestra?", code: 'r <- ""\nPara i <- 1 Hasta 3 Hacer\n\tr <- r + "ab"\nFinPara\nEscribir r', opts: ["ab", "ababab", "3ab", "ab3"], a: 1, why: "Se agrega \"ab\" tres veces al texto." },
+    { q: "¿Qué muestra?", code: 'r = ""\nPara i = 1 Hasta 3 Hacer\n\tr = r + "ab"\nFinPara\nEscribir r', opts: ["ab", "ababab", "3ab", "ab3"], a: 1, why: "Se agrega \"ab\" tres veces al texto." },
   ],
   exercises: [
     { id: "ex11a", title: "Iniciales", lang: "pseudo",
@@ -2788,13 +2792,13 @@ FinPara`) },
       starter: "Algoritmo ContarLetra\n\tDefinir frase, letra Como Cadena\n\t\nFinAlgoritmo",
       tests: [{ in: ["Banana", "a"], out: "3" }, { in: ["Hola Mundo", "O"], out: "2" }, { in: ["xyz", "a"], out: "0" }],
       hint: "Pasa la letra y cada carácter de la frase a minúsculas antes de comparar.",
-      solution: 'Algoritmo ContarLetra\n\tDefinir frase, letra Como Cadena\n\tLeer frase\n\tLeer letra\n\tc <- 0\n\tPara i <- 0 Hasta Longitud(frase) - 1 Hacer\n\t\tSi Minusculas(Subcadena(frase, i, i)) = Minusculas(letra) Entonces\n\t\t\tc <- c + 1\n\t\tFinSi\n\tFinPara\n\tEscribir c\nFinAlgoritmo' },
+      solution: 'Algoritmo ContarLetra\n\tDefinir frase, letra Como Cadena\n\tLeer frase\n\tLeer letra\n\tc = 0\n\tPara i = 0 Hasta Longitud(frase) - 1 Hacer\n\t\tSi Minusculas(Subcadena(frase, i, i)) == Minusculas(letra) Entonces\n\t\t\tc = c + 1\n\t\tFinSi\n\tFinPara\n\tEscribir c\nFinAlgoritmo' },
     { id: "ex11c", title: "¿Palíndromo?", lang: "pseudo",
       text: "Lee una palabra y muestra <code>Palíndromo</code> si se lee igual al derecho y al revés (sin importar mayúsculas), o <code>No es palíndromo</code>.",
       starter: "Algoritmo Palindromo\n\tDefinir p, inv Como Cadena\n\t\nFinAlgoritmo",
       tests: [{ in: ["Neuquen"], out: "Palíndromo" }, { in: ["casa"], out: "No es palíndromo" }, { in: ["oso"], out: "Palíndromo" }],
       hint: "Construye la palabra invertida y compara ambas en minúsculas.",
-      solution: 'Algoritmo Palindromo\n\tDefinir p, inv Como Cadena\n\tLeer p\n\tp <- Minusculas(p)\n\tinv <- ""\n\tPara i <- Longitud(p) - 1 Hasta 0 Con Paso -1 Hacer\n\t\tinv <- inv + Subcadena(p, i, i)\n\tFinPara\n\tSi inv = p Entonces\n\t\tEscribir "Palíndromo"\n\tSiNo\n\t\tEscribir "No es palíndromo"\n\tFinSi\nFinAlgoritmo' },
+      solution: 'Algoritmo Palindromo\n\tDefinir p, inv Como Cadena\n\tLeer p\n\tp = Minusculas(p)\n\tinv = ""\n\tPara i = Longitud(p) - 1 Hasta 0 Con Paso -1 Hacer\n\t\tinv = inv + Subcadena(p, i, i)\n\tFinPara\n\tSi inv == p Entonces\n\t\tEscribir "Palíndromo"\n\tSiNo\n\t\tEscribir "No es palíndromo"\n\tFinSi\nFinAlgoritmo' },
   ]
 });
 
@@ -2805,28 +2809,28 @@ L({
     { h: "¿Qué es una función?", body: `
 <p>Una <b>función</b> es un bloque de código con nombre que hace una tarea concreta. La defines una vez y la <b>llamas</b> (la usas) las veces que quieras. Ya usaste funciones que vienen incluidas: <code>raiz()</code>, <code>Longitud()</code>... Ahora vas a crear las tuyas.</p>
 ${IDEA("Una función es como una máquina: le das ingredientes (<b>parámetros</b>), hace su trabajo y te devuelve un producto (<b>valor de retorno</b>). No necesitas saber cómo funciona por dentro para usarla, igual que no necesitas saber cómo funciona una licuadora.")}
-${C(`Funcion resultado <- Cuadrado(n)
-	resultado <- n * n
+${C(`Funcion resultado = Cuadrado(n)
+	resultado = n * n
 FinFuncion
 
 Algoritmo UsarFuncion
 	Escribir Cuadrado(4)
 	Escribir Cuadrado(9)
-	x <- Cuadrado(3) + Cuadrado(4)
+	x = Cuadrado(3) + Cuadrado(4)
 	Escribir x
 FinAlgoritmo`)}
-<ul><li><code>Funcion resultado &lt;- Cuadrado(n)</code>: se llama <b>Cuadrado</b>, recibe un dato <b>n</b> y lo que valga <b>resultado</b> al final es lo que devuelve.</li><li>Las funciones se escriben <b>fuera</b> del Algoritmo (antes o después).</li><li>También puedes devolver con <code>Retornar valor</code>, que termina la función en ese momento.</li></ul>` },
+<ul><li><code>Funcion resultado = Cuadrado(n)</code>: se llama <b>Cuadrado</b>, recibe un dato <b>n</b> y lo que valga <b>resultado</b> al final es lo que devuelve.</li><li>Las funciones se escriben <b>fuera</b> del Algoritmo (antes o después).</li><li>También puedes devolver con <code>Retornar valor</code>, que termina la función en ese momento.</li></ul>` },
     { h: "Parámetros: los datos de entrada", body: `
 <p>Una función puede recibir varios parámetros, separados por comas. Al llamarla, pasas los valores en el mismo orden:</p>
-${C(`Funcion r <- AreaRectangulo(base, altura)
-	r <- base * altura
+${C(`Funcion r = AreaRectangulo(base, altura)
+	r = base * altura
 FinFuncion
 
-Funcion r <- Maximo(a, b)
+Funcion r = Maximo(a, b)
 	Si a > b Entonces
-		r <- a
+		r = a
 	SiNo
-		r <- b
+		r = b
 	FinSi
 FinFuncion
 
@@ -2837,9 +2841,9 @@ Algoritmo Parametros
 	Escribir "Máximo de tres: ", Maximo(Maximo(4, 17), 9)
 FinAlgoritmo`)}` },
     { h: "Subprocesos: funciones que no devuelven nada", body: `
-<p>A veces una función solo <b>hace algo</b> (mostrar un mensaje, dibujar) sin devolver un valor. Se llama <b>subproceso</b> o procedimiento. Se define sin la parte <code>resultado &lt;-</code> y se llama como una instrucción:</p>
+<p>A veces una función solo <b>hace algo</b> (mostrar un mensaje, dibujar) sin devolver un valor. Se llama <b>subproceso</b> o procedimiento. Se define sin la parte <code>resultado =</code> y se llama como una instrucción:</p>
 ${C(`SubProceso Linea(largo)
-	Para i <- 1 Hasta largo Hacer
+	Para i = 1 Hasta largo Hacer
 		Escribir Sin Saltar "="
 	FinPara
 	Escribir ""
@@ -2858,9 +2862,9 @@ Algoritmo Subprocesos
 FinAlgoritmo`)}` },
     { h: "Ámbito: cada función tiene sus propias variables", body: `
 <p>Las variables creadas dentro de una función son <b>locales</b>: solo existen ahí adentro. La función no puede ver las variables del algoritmo principal y viceversa. Lo único que entra son los parámetros y lo único que sale es el resultado.</p>
-${C(`Funcion r <- Doble(n)
-	temporal <- n * 2
-	r <- temporal
+${C(`Funcion r = Doble(n)
+	temporal = n * 2
+	r = temporal
 FinFuncion
 
 Algoritmo Ambito
@@ -2871,19 +2875,19 @@ FinAlgoritmo`)}
 ${TIP("<b>Por Referencia</b>: si quieres que una función pueda modificar una variable de quien la llama, declara el parámetro así: <code>Funcion Intercambiar(a Por Referencia, b Por Referencia)</code>. Los arreglos siempre se comparten (se pasan por referencia).")}` },
     { h: "¿Por qué usar funciones?", body: `
 <ul><li><b>No repetir código.</b> Si algo se hace en tres lugares, escríbelo una vez como función. Si hay que corregirlo, se corrige en un solo lugar. (Principio DRY: <i>Don't Repeat Yourself</i>).</li><li><b>Dividir problemas grandes.</b> Un problema enorme se vuelve varios problemas pequeños, cada uno con un nombre claro.</li><li><b>Probar por partes.</b> Puedes verificar que cada función funciona sola.</li><li><b>Leer mejor.</b> <code>Si EsPrimo(n) Entonces</code> se entiende sin leer cómo está hecho.</li></ul>
-${C(`Funcion r <- EsPrimo(n)
-	r <- n > 1
-	d <- 2
+${C(`Funcion r = EsPrimo(n)
+	r = n > 1
+	d = 2
 	Mientras d * d <= n Y r Hacer
-		Si n MOD d = 0 Entonces
-			r <- Falso
+		Si n MOD d == 0 Entonces
+			r = Falso
 		FinSi
-		d <- d + 1
+		d = d + 1
 	FinMientras
 FinFuncion
 
 Algoritmo PrimosHasta50
-	Para i <- 1 Hasta 50 Hacer
+	Para i = 1 Hasta 50 Hacer
 		Si EsPrimo(i) Entonces
 			Escribir Sin Saltar i, " "
 		FinSi
@@ -2893,8 +2897,8 @@ FinAlgoritmo`)}
 ${PRO("En el trabajo real, el código se organiza casi todo en funciones pequeñas con nombres que explican qué hacen. Una regla práctica: si una función no entra en la pantalla, probablemente hace demasiadas cosas y conviene dividirla.")}` },
   ],
   cheat: [
-    { h: "Función que devuelve", body: CN(`Funcion r <- Sumar(a, b)
-	r <- a + b
+    { h: "Función que devuelve", body: CN(`Funcion r = Sumar(a, b)
+	r = a + b
 FinFuncion
 
 // o con Retornar:
@@ -2910,32 +2914,32 @@ Saludar("Ana")`) },
     { h: "Recuerda", body: `<ul><li>Se definen fuera del Algoritmo.</li><li>Los parámetros se pasan en orden.</li><li>Variables internas = <b>locales</b>.</li><li><code>Por Referencia</code> permite modificar la variable original.</li><li>Una función = una tarea, con nombre claro.</li></ul>` },
   ],
   quiz: [
-    { q: "¿Qué muestra?", code: "Funcion r <- Sumar1(x)\n\tr <- x + 1\nFinFuncion\nAlgoritmo A\n\tEscribir Sumar1(Sumar1(5))\nFinAlgoritmo", opts: ["6", "7", "5", "11"], a: 1, why: "Sumar1(5)=6, Sumar1(6)=7." },
+    { q: "¿Qué muestra?", code: "Funcion r = Sumar1(x)\n\tr = x + 1\nFinFuncion\nAlgoritmo A\n\tEscribir Sumar1(Sumar1(5))\nFinAlgoritmo", opts: ["6", "7", "5", "11"], a: 1, why: "Sumar1(5)=6, Sumar1(6)=7." },
     { q: "¿Cuál es la diferencia entre una función y un subproceso?", opts: ["No hay diferencia", "La función devuelve un valor; el subproceso solo realiza acciones", "El subproceso es más rápido", "La función no tiene parámetros"], a: 1, why: "Un subproceso hace algo pero no devuelve un resultado para usar en una expresión." },
-    { q: "Si una función define <code>total &lt;- 0</code> dentro, ¿se puede usar <code>total</code> en el Algoritmo principal?", opts: ["Sí", "No, es una variable local", "Solo si es Entero", "Solo después de llamarla"], a: 1, why: "Las variables locales solo existen dentro de su función." },
-    { q: "¿Qué recibe <code>a</code> en la llamada <code>Restar(10, 3)</code> si la función es <code>Funcion r &lt;- Restar(a, b)</code>?", opts: ["3", "10", "7", "Nada"], a: 1, why: "Los parámetros se asignan en orden: a=10, b=3." },
+    { q: "Si una función define <code>total = 0</code> dentro, ¿se puede usar <code>total</code> en el Algoritmo principal?", opts: ["Sí", "No, es una variable local", "Solo si es Entero", "Solo después de llamarla"], a: 1, why: "Las variables locales solo existen dentro de su función." },
+    { q: "¿Qué recibe <code>a</code> en la llamada <code>Restar(10, 3)</code> si la función es <code>Funcion r = Restar(a, b)</code>?", opts: ["3", "10", "7", "Nada"], a: 1, why: "Los parámetros se asignan en orden: a=10, b=3." },
     { q: "¿Cuál es un buen motivo para crear una función?", opts: ["El mismo cálculo se repite en varias partes", "Para que el programa tenga más líneas", "Para usar menos variables", "Nunca conviene"], a: 0, why: "Evita repetir código y facilita los cambios." },
     { q: "¿Qué hace <code>Retornar</code>?", opts: ["Repite la función", "Devuelve un valor y termina la función", "Vuelve al inicio del programa", "Muestra un valor"], a: 1, why: "Sale de la función entregando ese valor a quien la llamó." },
   ],
   exercises: [
     { id: "ex12a", title: "Función Potencia", lang: "pseudo",
       text: "Escribe una función <code>Potencia(base, exponente)</code> que calcule base elevado a exponente <b>usando un bucle</b> (sin usar ^). El programa lee base y exponente y muestra el resultado en la última línea.",
-      starter: "Funcion r <- Potencia(base, exponente)\n\t\nFinFuncion\n\nAlgoritmo Pot\n\tLeer b, e\n\tEscribir Potencia(b, e)\nFinAlgoritmo",
+      starter: "Funcion r = Potencia(base, exponente)\n\t\nFinFuncion\n\nAlgoritmo Pot\n\tLeer b, e\n\tEscribir Potencia(b, e)\nFinAlgoritmo",
       tests: [{ in: ["2", "10"], out: "1024" }, { in: ["5", "0"], out: "1" }, { in: ["3", "4"], out: "81" }],
       hint: "r empieza en 1 y se multiplica por base, exponente veces.",
-      solution: "Funcion r <- Potencia(base, exponente)\n\tr <- 1\n\tPara i <- 1 Hasta exponente Hacer\n\t\tr <- r * base\n\tFinPara\nFinFuncion\n\nAlgoritmo Pot\n\tLeer b, e\n\tEscribir Potencia(b, e)\nFinAlgoritmo" },
+      solution: "Funcion r = Potencia(base, exponente)\n\tr = 1\n\tPara i = 1 Hasta exponente Hacer\n\t\tr = r * base\n\tFinPara\nFinFuncion\n\nAlgoritmo Pot\n\tLeer b, e\n\tEscribir Potencia(b, e)\nFinAlgoritmo" },
     { id: "ex12b", title: "Función Factorial", lang: "pseudo",
       text: "Escribe una función <code>Factorial(n)</code>. El programa lee N y muestra los factoriales de 0 a N con el formato <code>i! = valor</code>. Recuerda que 0! = 1.",
-      starter: "Funcion r <- Factorial(n)\n\t\nFinFuncion\n\nAlgoritmo Factoriales\n\tLeer n\n\t\nFinAlgoritmo",
+      starter: "Funcion r = Factorial(n)\n\t\nFinFuncion\n\nAlgoritmo Factoriales\n\tLeer n\n\t\nFinAlgoritmo",
       tests: [{ in: ["4"], out: "0! = 1\n1! = 1\n2! = 2\n3! = 6\n4! = 24" }, { in: ["0"], out: "0! = 1" }],
-      hint: "Dentro de la función: r <- 1 y un Para de 1 a n multiplicando. En el algoritmo, un Para de 0 a n.",
-      solution: 'Funcion r <- Factorial(n)\n\tr <- 1\n\tPara i <- 1 Hasta n Hacer\n\t\tr <- r * i\n\tFinPara\nFinFuncion\n\nAlgoritmo Factoriales\n\tLeer n\n\tPara i <- 0 Hasta n Hacer\n\t\tEscribir i, "! = ", Factorial(i)\n\tFinPara\nFinAlgoritmo' },
+      hint: "Dentro de la función: r = 1 y un Para de 1 a n multiplicando. En el algoritmo, un Para de 0 a n.",
+      solution: 'Funcion r = Factorial(n)\n\tr = 1\n\tPara i = 1 Hasta n Hacer\n\t\tr = r * i\n\tFinPara\nFinFuncion\n\nAlgoritmo Factoriales\n\tLeer n\n\tPara i = 0 Hasta n Hacer\n\t\tEscribir i, "! = ", Factorial(i)\n\tFinPara\nFinAlgoritmo' },
     { id: "ex12c", title: "Validar contraseña", lang: "pseudo",
       text: "Escribe una función <code>EsSegura(clave)</code> que devuelva Verdadero si la clave tiene <b>al menos 8 caracteres</b> y <b>contiene al menos un dígito</b> (0-9). El programa lee una clave y muestra <code>Segura</code> o <code>Insegura</code>.",
-      starter: "Funcion r <- EsSegura(clave)\n\t\nFinFuncion\n\nAlgoritmo Claves\n\tDefinir c Como Cadena\n\tLeer c\n\t\nFinAlgoritmo",
+      starter: "Funcion r = EsSegura(clave)\n\t\nFinFuncion\n\nAlgoritmo Claves\n\tDefinir c Como Cadena\n\tLeer c\n\t\nFinAlgoritmo",
       tests: [{ in: ["password1"], out: "Segura" }, { in: ["corta1"], out: "Insegura" }, { in: ["sindigitos"], out: "Insegura" }, { in: ["12345678"], out: "Segura" }],
       hint: "Recorre la clave con una bandera tieneDigito. Un carácter es dígito si está entre \"0\" y \"9\": letra >= \"0\" Y letra <= \"9\".",
-      solution: 'Funcion r <- EsSegura(clave)\n\ttieneDigito <- Falso\n\tPara i <- 0 Hasta Longitud(clave) - 1 Hacer\n\t\tletra <- Subcadena(clave, i, i)\n\t\tSi letra >= "0" Y letra <= "9" Entonces\n\t\t\ttieneDigito <- Verdadero\n\t\tFinSi\n\tFinPara\n\tr <- Longitud(clave) >= 8 Y tieneDigito\nFinFuncion\n\nAlgoritmo Claves\n\tDefinir c Como Cadena\n\tLeer c\n\tSi EsSegura(c) Entonces\n\t\tEscribir "Segura"\n\tSiNo\n\t\tEscribir "Insegura"\n\tFinSi\nFinAlgoritmo' },
+      solution: 'Funcion r = EsSegura(clave)\n\ttieneDigito = Falso\n\tPara i = 0 Hasta Longitud(clave) - 1 Hacer\n\t\tletra = Subcadena(clave, i, i)\n\t\tSi letra >= "0" Y letra <= "9" Entonces\n\t\t\ttieneDigito = Verdadero\n\t\tFinSi\n\tFinPara\n\tr = Longitud(clave) >= 8 Y tieneDigito\nFinFuncion\n\nAlgoritmo Claves\n\tDefinir c Como Cadena\n\tLeer c\n\tSi EsSegura(c) Entonces\n\t\tEscribir "Segura"\n\tSiNo\n\t\tEscribir "Insegura"\n\tFinSi\nFinAlgoritmo' },
   ]
 });
 
@@ -2947,44 +2951,44 @@ L({
 <p>Buscar y ordenar son de las tareas más comunes en la informática: buscar un contacto, ordenar productos por precio, mostrar el ranking de un juego. Estudiar cómo se hacen te entrena en pensamiento lógico y es un tema habitual en <b>entrevistas técnicas</b>.</p>` },
     { h: "Búsqueda lineal", body: `
 <p>La más simple: revisar los elementos uno por uno hasta encontrarlo. Funciona siempre, esté o no ordenada la lista.</p>
-${C(`Funcion pos <- BuscarLineal(v, n, x)
-	pos <- -1
-	i <- 0
-	Mientras i < n Y pos = -1 Hacer
-		Si v[i] = x Entonces
-			pos <- i
+${C(`Funcion pos = BuscarLineal(v, n, x)
+	pos = -1
+	i = 0
+	Mientras i < n Y pos == -1 Hacer
+		Si v[i] == x Entonces
+			pos = i
 		FinSi
-		i <- i + 1
+		i = i + 1
 	FinMientras
 FinFuncion
 
 Algoritmo Lineal
 	Dimension v[6]
-	v[0] <- 15
-	v[1] <- 3
-	v[2] <- 42
-	v[3] <- 8
-	v[4] <- 23
-	v[5] <- 4
+	v[0] = 15
+	v[1] = 3
+	v[2] = 42
+	v[3] = 8
+	v[4] = 23
+	v[5] = 4
 	Escribir "El 23 está en la posición ", BuscarLineal(v, 6, 23)
 	Escribir "El 99 está en la posición ", BuscarLineal(v, 6, 99)
 FinAlgoritmo`)}
 <p>Fíjate en la condición <code>pos = -1</code>: en cuanto lo encuentra, deja de buscar. Si la lista tiene un millón de elementos, en el peor caso revisa el millón.</p>` },
     { h: "Búsqueda binaria", body: `
 <p>Si la lista está <b>ordenada</b>, hay algo mucho mejor. Piensa en buscar una palabra en un diccionario de papel: abres por la mitad y, según la letra, descartas la mitad izquierda o la derecha. Repites con la mitad que queda.</p>
-${C(`Funcion pos <- BuscarBinaria(v, n, x)
-	pos <- -1
-	izq <- 0
-	der <- n - 1
-	Mientras izq <= der Y pos = -1 Hacer
-		medio <- trunc((izq + der) / 2)
-		Si v[medio] = x Entonces
-			pos <- medio
+${C(`Funcion pos = BuscarBinaria(v, n, x)
+	pos = -1
+	izq = 0
+	der = n - 1
+	Mientras izq <= der Y pos == -1 Hacer
+		medio = trunc((izq + der) / 2)
+		Si v[medio] == x Entonces
+			pos = medio
 		SiNo
 			Si v[medio] < x Entonces
-				izq <- medio + 1
+				izq = medio + 1
 			SiNo
-				der <- medio - 1
+				der = medio - 1
 			FinSi
 		FinSi
 	FinMientras
@@ -2992,8 +2996,8 @@ FinFuncion
 
 Algoritmo Binaria
 	Dimension v[8]
-	Para i <- 0 Hasta 7 Hacer
-		v[i] <- (i + 1) * 5
+	Para i = 0 Hasta 7 Hacer
+		v[i] = (i + 1) * 5
 	FinPara
 	Escribir v
 	Escribir "El 35 está en la posición ", BuscarBinaria(v, 8, 35)
@@ -3004,20 +3008,20 @@ ${TABLE(["Elementos", "Lineal (peor caso)", "Binaria (peor caso)"], [["10", "10 
 <p>Para ordenar de menor a mayor, la idea más simple: recorre la lista comparando cada par de vecinos; si están al revés, <b>intercámbialos</b>. Después de una pasada completa, el mayor «burbujea» hasta el final. Repite hasta que todo esté ordenado.</p>
 ${C(`Algoritmo Burbuja
 	Dimension v[6]
-	v[0] <- 29
-	v[1] <- 10
-	v[2] <- 14
-	v[3] <- 37
-	v[4] <- 13
-	v[5] <- 5
-	n <- 6
+	v[0] = 29
+	v[1] = 10
+	v[2] = 14
+	v[3] = 37
+	v[4] = 13
+	v[5] = 5
+	n = 6
 	Escribir "Antes:   ", v
-	Para pasada <- 1 Hasta n - 1 Hacer
-		Para i <- 0 Hasta n - 1 - pasada Hacer
+	Para pasada = 1 Hasta n - 1 Hacer
+		Para i = 0 Hasta n - 1 - pasada Hacer
 			Si v[i] > v[i + 1] Entonces
-				aux <- v[i]
-				v[i] <- v[i + 1]
-				v[i + 1] <- aux
+				aux = v[i]
+				v[i] = v[i + 1]
+				v[i + 1] = aux
 			FinSi
 		FinPara
 		Escribir "Pasada ", pasada, ": ", v
@@ -3032,19 +3036,19 @@ ${TABLE(["Notación", "Nombre", "Ejemplo", "Con 1.000 datos"], [["O(1)", "Consta
 ${PRO("En la práctica casi nunca programas tu propio ordenamiento: los lenguajes traen uno muy eficiente (en JavaScript, <code>array.sort()</code>). Pero entender estas ideas te permite elegir bien, detectar código lento y responder preguntas de entrevistas técnicas.")}` },
   ],
   cheat: [
-    { h: "Intercambio", body: CN(`aux <- v[i]
-v[i] <- v[j]
-v[j] <- aux`) },
-    { h: "Búsqueda binaria (lista ordenada)", body: CN(`izq <- 0
-der <- n - 1
+    { h: "Intercambio", body: CN(`aux = v[i]
+v[i] = v[j]
+v[j] = aux`) },
+    { h: "Búsqueda binaria (lista ordenada)", body: CN(`izq = 0
+der = n - 1
 Mientras izq <= der Hacer
-	medio <- trunc((izq + der) / 2)
+	medio = trunc((izq + der) / 2)
 	// igual → encontrado
-	// menor → izq <- medio + 1
-	// mayor → der <- medio - 1
+	// menor → izq = medio + 1
+	// mayor → der = medio - 1
 FinMientras`) },
-    { h: "Burbuja", body: CN(`Para pasada <- 1 Hasta n - 1 Hacer
-	Para i <- 0 Hasta n - 1 - pasada Hacer
+    { h: "Burbuja", body: CN(`Para pasada = 1 Hasta n - 1 Hacer
+	Para i = 0 Hasta n - 1 - pasada Hacer
 		Si v[i] > v[i + 1] Entonces
 			// intercambiar
 		FinSi
@@ -3057,21 +3061,21 @@ FinPara`) },
     { q: "En una lista ordenada de 1.000.000 elementos, ¿cuántos pasos necesita como máximo la búsqueda binaria?", opts: ["1.000.000", "500.000", "Unos 20", "1"], a: 2, why: "Cada paso divide a la mitad: 2^20 ≈ 1.000.000." },
     { q: "Después de la primera pasada de burbuja (orden ascendente), ¿qué se sabe con seguridad?", opts: ["El menor está al principio", "El mayor está al final", "Todo está ordenado", "Nada"], a: 1, why: "El mayor va «burbujeando» hasta la última posición." },
     { q: "Un algoritmo con dos bucles anidados que recorren toda la lista es aproximadamente...", opts: ["O(1)", "O(log n)", "O(n)", "O(n²)"], a: 3, why: "n vueltas por cada una de n vueltas: n × n." },
-    { q: "En la búsqueda binaria, si <code>v[medio] &lt; x</code>, ¿qué haces?", opts: ["der <- medio - 1", "izq <- medio + 1", "Terminar", "medio <- medio + 1"], a: 1, why: "El buscado es mayor que el medio: está a la derecha, se descarta la izquierda." },
+    { q: "En la búsqueda binaria, si <code>v[medio] &lt; x</code>, ¿qué haces?", opts: ["der = medio - 1", "izq = medio + 1", "Terminar", "medio = medio + 1"], a: 1, why: "El buscado es mayor que el medio: está a la derecha, se descarta la izquierda." },
   ],
   exercises: [
     { id: "ex13a", title: "Ordenar de mayor a menor", lang: "pseudo",
       text: "Lee 5 números en un arreglo, ordénalos de <b>mayor a menor</b> con burbuja y muéstralos uno por línea.",
-      starter: "Algoritmo OrdenDesc\n\tDimension v[5]\n\tPara i <- 0 Hasta 4 Hacer\n\t\tLeer v[i]\n\tFinPara\n\t\nFinAlgoritmo",
+      starter: "Algoritmo OrdenDesc\n\tDimension v[5]\n\tPara i = 0 Hasta 4 Hacer\n\t\tLeer v[i]\n\tFinPara\n\t\nFinAlgoritmo",
       tests: [{ in: ["3", "9", "1", "7", "5"], out: "9\n7\n5\n3\n1" }, { in: ["10", "20", "30", "40", "50"], out: "50\n40\n30\n20\n10" }],
       hint: "Es el mismo burbuja, pero intercambia cuando v[i] < v[i + 1].",
-      solution: 'Algoritmo OrdenDesc\n\tDimension v[5]\n\tPara i <- 0 Hasta 4 Hacer\n\t\tLeer v[i]\n\tFinPara\n\tPara p <- 1 Hasta 4 Hacer\n\t\tPara i <- 0 Hasta 4 - p Hacer\n\t\t\tSi v[i] < v[i + 1] Entonces\n\t\t\t\taux <- v[i]\n\t\t\t\tv[i] <- v[i + 1]\n\t\t\t\tv[i + 1] <- aux\n\t\t\tFinSi\n\t\tFinPara\n\tFinPara\n\tPara i <- 0 Hasta 4 Hacer\n\t\tEscribir v[i]\n\tFinPara\nFinAlgoritmo' },
+      solution: 'Algoritmo OrdenDesc\n\tDimension v[5]\n\tPara i = 0 Hasta 4 Hacer\n\t\tLeer v[i]\n\tFinPara\n\tPara p = 1 Hasta 4 Hacer\n\t\tPara i = 0 Hasta 4 - p Hacer\n\t\t\tSi v[i] < v[i + 1] Entonces\n\t\t\t\taux = v[i]\n\t\t\t\tv[i] = v[i + 1]\n\t\t\t\tv[i + 1] = aux\n\t\t\tFinSi\n\t\tFinPara\n\tFinPara\n\tPara i = 0 Hasta 4 Hacer\n\t\tEscribir v[i]\n\tFinPara\nFinAlgoritmo' },
     { id: "ex13b", title: "Pasos de la búsqueda binaria", lang: "pseudo",
       text: "El arreglo tiene los múltiplos de 3 del 3 al 30 (10 elementos, ya ordenados). Lee un número X, búscalo con búsqueda binaria y muestra en la última línea <code>Encontrado en P tras K comparaciones</code> o <code>No está tras K comparaciones</code>. Cuenta una comparación cada vez que miras <code>v[medio]</code>.",
-      starter: "Algoritmo PasosBinaria\n\tDimension v[10]\n\tPara i <- 0 Hasta 9 Hacer\n\t\tv[i] <- (i + 1) * 3\n\tFinPara\n\tLeer x\n\t\nFinAlgoritmo",
+      starter: "Algoritmo PasosBinaria\n\tDimension v[10]\n\tPara i = 0 Hasta 9 Hacer\n\t\tv[i] = (i + 1) * 3\n\tFinPara\n\tLeer x\n\t\nFinAlgoritmo",
       tests: [{ in: ["15"], out: "Encontrado en 4 tras 1 comparaciones" }, { in: ["30"], out: "Encontrado en 9 tras 4 comparaciones" }, { in: ["7"], out: "No está tras 3 comparaciones" }],
-      hint: "Usa izq, der, medio <- trunc((izq + der) / 2) y un contador que aumenta en cada vuelta del Mientras.",
-      solution: 'Algoritmo PasosBinaria\n\tDimension v[10]\n\tPara i <- 0 Hasta 9 Hacer\n\t\tv[i] <- (i + 1) * 3\n\tFinPara\n\tLeer x\n\tizq <- 0\n\tder <- 9\n\tpos <- -1\n\tk <- 0\n\tMientras izq <= der Y pos = -1 Hacer\n\t\tmedio <- trunc((izq + der) / 2)\n\t\tk <- k + 1\n\t\tSi v[medio] = x Entonces\n\t\t\tpos <- medio\n\t\tSiNo\n\t\t\tSi v[medio] < x Entonces\n\t\t\t\tizq <- medio + 1\n\t\t\tSiNo\n\t\t\t\tder <- medio - 1\n\t\t\tFinSi\n\t\tFinSi\n\tFinMientras\n\tSi pos = -1 Entonces\n\t\tEscribir "No está tras ", k, " comparaciones"\n\tSiNo\n\t\tEscribir "Encontrado en ", pos, " tras ", k, " comparaciones"\n\tFinSi\nFinAlgoritmo' },
+      hint: "Usa izq, der, medio = trunc((izq + der) / 2) y un contador que aumenta en cada vuelta del Mientras.",
+      solution: 'Algoritmo PasosBinaria\n\tDimension v[10]\n\tPara i = 0 Hasta 9 Hacer\n\t\tv[i] = (i + 1) * 3\n\tFinPara\n\tLeer x\n\tizq = 0\n\tder = 9\n\tpos = -1\n\tk = 0\n\tMientras izq <= der Y pos == -1 Hacer\n\t\tmedio = trunc((izq + der) / 2)\n\t\tk = k + 1\n\t\tSi v[medio] == x Entonces\n\t\t\tpos = medio\n\t\tSiNo\n\t\t\tSi v[medio] < x Entonces\n\t\t\t\tizq = medio + 1\n\t\t\tSiNo\n\t\t\t\tder = medio - 1\n\t\t\tFinSi\n\t\tFinSi\n\tFinMientras\n\tSi pos == -1 Entonces\n\t\tEscribir "No está tras ", k, " comparaciones"\n\tSiNo\n\t\tEscribir "Encontrado en ", pos, " tras ", k, " comparaciones"\n\tFinSi\nFinAlgoritmo' },
   ]
 });
 
@@ -3123,8 +3127,8 @@ console.log("El total es", 150);`)}
 <p>Reglas de escritura nuevas:</p>
 <ul><li>Los textos van entre comillas <code>"..."</code> o <code>'...'</code>.</li><li>Cada instrucción termina con punto y coma <code>;</code> (en realidad es opcional, pero se recomienda).</li><li>Los comentarios también son <code>//</code>.</li><li><b>Mayúsculas y minúsculas importan</b>: <code>console.log</code> funciona, <code>Console.Log</code> no.</li></ul>` },
     { h: "Variables: let y const", body: `
-<p>En JavaScript declaras variables con <code>let</code> (si va a cambiar) o <code>const</code> (si no va a cambiar). La asignación se hace con <code>=</code> (lo que en pseudocódigo era <code>&lt;-</code>):</p>
-${TABLE(["Pseudocódigo", "JavaScript"], [["<code>Definir edad Como Entero</code><br><code>edad &lt;- 25</code>", "<code>let edad = 25;</code>"], ["<code>edad &lt;- edad + 1</code>", "<code>edad = edad + 1;</code> o <code>edad++;</code>"], ["(un valor fijo)", "<code>const PI = 3.1416;</code>"]])}
+<p>En JavaScript declaras variables con <code>let</code> (si va a cambiar) o <code>const</code> (si no va a cambiar). La asignación se hace con <code>=</code>, igual que en nuestro pseudocódigo:</p>
+${TABLE(["Pseudocódigo", "JavaScript"], [["<code>Definir edad Como Entero</code><br><code>edad = 25</code>", "<code>let edad = 25;</code>"], ["<code>edad = edad + 1</code>", "<code>edad = edad + 1;</code> o <code>edad++;</code>"], ["(un valor fijo)", "<code>const PI = 3.1416;</code>"]])}
 ${CJ(`let puntos = 10;
 puntos = puntos + 5;
 puntos += 5;       // atajo de puntos = puntos + 5
@@ -3148,14 +3152,14 @@ console.log("5" - 3);    // 2: convierte a número
 console.log(Number("5") + 3);  // 8: conversión explícita`)}
 ${WARN("Cuando un dato viene del usuario (un formulario, <code>prompt</code>) llega como <b>texto</b>. Conviértelo con <code>Number()</code> antes de hacer cuentas.")}` },
     { h: "Operadores", body: `
-${TABLE(["Pseudocódigo", "JavaScript"], [["<code>+ - * /</code>", "<code>+ - * /</code>"], ["<code>MOD</code>", "<code>%</code>"], ["<code>^</code>", "<code>**</code>"], ["<code>trunc(x)</code>", "<code>Math.trunc(x)</code>"], ["<code>=</code> (comparar)", "<code>===</code>"], ["<code>&lt;&gt;</code>", "<code>!==</code>"], ["<code>Y</code> / <code>O</code> / <code>NO</code>", "<code>&amp;&amp;</code> / <code>||</code> / <code>!</code>"], ["<code>raiz(x)</code>", "<code>Math.sqrt(x)</code>"], ["<code>aleatorio(1,6)</code>", "<code>Math.floor(Math.random() * 6) + 1</code>"]])}
+${TABLE(["Pseudocódigo", "JavaScript"], [["<code>+ - * /</code>", "<code>+ - * /</code>"], ["<code>MOD</code>", "<code>%</code>"], ["<code>^</code>", "<code>**</code>"], ["<code>trunc(x)</code>", "<code>Math.trunc(x)</code>"], ["<code>==</code> (comparar)", "<code>===</code>"], ["<code>&lt;&gt;</code>", "<code>!==</code>"], ["<code>Y</code> / <code>O</code> / <code>NO</code>", "<code>&amp;&amp;</code> / <code>||</code> / <code>!</code>"], ["<code>raiz(x)</code>", "<code>Math.sqrt(x)</code>"], ["<code>aleatorio(1,6)</code>", "<code>Math.floor(Math.random() * 6) + 1</code>"]])}
 ${CJ(`const edad = 20;
 console.log(17 % 5);
 console.log(2 ** 10);
 console.log(edad >= 18 && edad < 65);
 console.log(edad === 20);
 console.log(!(edad > 30));`)}
-${WARN("En JavaScript <code>=</code> asigna y <code>===</code> compara. También existe <code>==</code>, pero convierte tipos de forma confusa (<code>\"5\" == 5</code> es true). Usa siempre <code>===</code> y <code>!==</code>.")}` },
+${WARN("En JavaScript <code>=</code> guarda un valor y <code>===</code> (tres signos) compara. En pseudocódigo comparabas con <code>==</code>: en JavaScript también existe, pero convierte tipos de forma confusa (<code>\"5\" == 5</code> da true). Usa siempre <code>===</code> y <code>!==</code>.")}` },
     { h: "Plantillas de texto", body: `
 <p>Para armar textos con variables, JavaScript tiene las <b>plantillas</b> (template strings): se escriben entre acentos graves <code>\`</code> y las variables van dentro de <code>\${ }</code>:</p>
 ${CJ(`const producto = "Café";
@@ -3170,11 +3174,11 @@ console.log(\`\${cantidad} x \${producto} = $\${precio * cantidad}\`);`)}
 const PI = 3.14;  // no cambia
 x += 2;  x++;`, "js") },
     { h: "Tipos", body: `<code>number</code> · <code>string</code> · <code>boolean</code> · <code>undefined</code> · <code>null</code><br><code>typeof x</code> dice el tipo. <code>Number(\"5\")</code> convierte.` },
-    { h: "Traducción rápida", body: TABLE(["Pseudo", "JS"], [["&lt;-", "="], ["=", "==="], ["&lt;&gt;", "!=="], ["MOD", "%"], ["Y O NO", "&amp;&amp; || !"], ["^", "**"]]) },
+    { h: "Traducción rápida", body: TABLE(["Pseudo", "JS"], [["=", "="], ["==", "==="], ["&lt;&gt;", "!=="], ["MOD", "%"], ["Y O NO", "&amp;&amp; || !"], ["^", "**"]]) },
     { h: "Plantilla", body: CN("`Hola ${nombre}, tienes ${edad} años`", "js") },
   ],
   quiz: [
-    { q: "¿Cómo se declara una variable que cambiará de valor?", opts: ["const x = 1;", "let x = 1;", "Definir x;", "x <- 1;"], a: 1, why: "let para variables que se reasignan." },
+    { q: "¿Cómo se declara una variable que cambiará de valor?", opts: ["const x = 1;", "let x = 1;", "Definir x;", "x == 1;"], a: 1, why: "let para variables que se reasignan." },
     { q: "¿Qué muestra <code>console.log(10 % 4)</code>?", opts: ["2.5", "2", "6", "40"], a: 1, why: "% es MOD: 10 entre 4 sobra 2." },
     { q: "¿Qué da <code>\"7\" === 7</code>?", opts: ["true", "false", "Error", "\"77\""], a: 1, why: "=== compara también el tipo: string no es igual a number." },
     { q: "¿Cuál es el equivalente de <code>edad >= 18 Y tieneDni</code>?", opts: ["edad >= 18 and tieneDni", "edad >= 18 && tieneDni", "edad >= 18 || tieneDni", "edad >= 18 & tieneDni"], a: 1, why: "&& es el Y lógico." },
@@ -3210,7 +3214,7 @@ L({
   sections: [
     { h: "Llaves y paréntesis", body: `
 <p>En JavaScript los bloques no terminan con <code>FinSi</code> o <code>FinPara</code>: se encierran entre <b>llaves</b> <code>{ }</code>. Y las condiciones van entre <b>paréntesis</b> <code>( )</code>.</p>
-${TABLE(["Pseudocódigo", "JavaScript"], [["<code>Si cond Entonces</code><br>&nbsp;&nbsp;...<br><code>SiNo</code><br>&nbsp;&nbsp;...<br><code>FinSi</code>", "<code>if (cond) {</code><br>&nbsp;&nbsp;...<br><code>} else {</code><br>&nbsp;&nbsp;...<br><code>}</code>"], ["<code>Mientras cond Hacer ... FinMientras</code>", "<code>while (cond) { ... }</code>"], ["<code>Repetir ... Hasta Que cond</code>", "<code>do { ... } while (!cond);</code>"], ["<code>Para i &lt;- 1 Hasta 10 Hacer</code>", "<code>for (let i = 1; i &lt;= 10; i++) {</code>"], ["<code>Segun x Hacer</code>", "<code>switch (x) {</code>"]])}` },
+${TABLE(["Pseudocódigo", "JavaScript"], [["<code>Si cond Entonces</code><br>&nbsp;&nbsp;...<br><code>SiNo</code><br>&nbsp;&nbsp;...<br><code>FinSi</code>", "<code>if (cond) {</code><br>&nbsp;&nbsp;...<br><code>} else {</code><br>&nbsp;&nbsp;...<br><code>}</code>"], ["<code>Mientras cond Hacer ... FinMientras</code>", "<code>while (cond) { ... }</code>"], ["<code>Repetir ... Hasta Que cond</code>", "<code>do { ... } while (!cond);</code>"], ["<code>Para i = 1 Hasta 10 Hacer</code>", "<code>for (let i = 1; i &lt;= 10; i++) {</code>"], ["<code>Segun x Hacer</code>", "<code>switch (x) {</code>"]])}` },
     { h: "if, else if, else", body: `
 ${CJ(`const nota = 8;
 if (nota >= 9) {
@@ -3321,7 +3325,7 @@ L({
   summary: "function, return, parámetros por defecto y funciones flecha.",
   sections: [
     { h: "Declarar y llamar funciones", body: `
-${TABLE(["Pseudocódigo", "JavaScript"], [["<code>Funcion r &lt;- Doble(n)</code><br>&nbsp;&nbsp;<code>r &lt;- n * 2</code><br><code>FinFuncion</code>", "<code>function doble(n) {</code><br>&nbsp;&nbsp;<code>return n * 2;</code><br><code>}</code>"]])}
+${TABLE(["Pseudocódigo", "JavaScript"], [["<code>Funcion r = Doble(n)</code><br>&nbsp;&nbsp;<code>r = n * 2</code><br><code>FinFuncion</code>", "<code>function doble(n) {</code><br>&nbsp;&nbsp;<code>return n * 2;</code><br><code>}</code>"]])}
 ${CJ(`function doble(n) {
   return n * 2;
 }
@@ -4006,16 +4010,16 @@ ${PRO("Un proyecto propio terminado, publicado y con un README claro vale más q
     const trans = TABLE(["Concepto", "Pseudocódigo", "JavaScript"], [
       ["Mostrar", "<code>Escribir \"Hola\"</code>", "<code>console.log(\"Hola\")</code>"],
       ["Leer dato", "<code>Leer x</code>", "<code>const x = prompt()</code>"],
-      ["Variable", "<code>x &lt;- 5</code>", "<code>let x = 5;</code>"],
-      ["Comparar", "<code>=</code> <code>&lt;&gt;</code>", "<code>===</code> <code>!==</code>"],
+      ["Variable", "<code>x = 5</code>", "<code>let x = 5;</code>"],
+      ["Comparar", "<code>==</code> <code>&lt;&gt;</code>", "<code>===</code> <code>!==</code>"],
       ["Lógicos", "<code>Y O NO</code>", "<code>&amp;&amp; || !</code>"],
       ["Resto", "<code>MOD</code>", "<code>%</code>"],
       ["Si", "<code>Si c Entonces … SiNo … FinSi</code>", "<code>if (c) { … } else { … }</code>"],
       ["Mientras", "<code>Mientras c Hacer … FinMientras</code>", "<code>while (c) { … }</code>"],
-      ["Para", "<code>Para i &lt;- 0 Hasta 9 Hacer</code>", "<code>for (let i = 0; i &lt;= 9; i++)</code>"],
+      ["Para", "<code>Para i = 0 Hasta 9 Hacer</code>", "<code>for (let i = 0; i &lt;= 9; i++)</code>"],
       ["Arreglo", "<code>Dimension v[5]</code>", "<code>const v = [];</code>"],
       ["Largo", "<code>Longitud(t)</code>", "<code>t.length</code>"],
-      ["Función", "<code>Funcion r &lt;- F(a) … FinFuncion</code>", "<code>function f(a) { return …; }</code>"],
+      ["Función", "<code>Funcion r = F(a) … FinFuncion</code>", "<code>function f(a) { return …; }</code>"],
     ]);
     return `<div class="stack">
       <div><div class="eyebrow">Para repasar</div><h1 class="page-title">Machetes</h1><p class="lead">Lo esencial de cada clase en una sola vista. Ideal para repasar antes de un examen o cuando no recuerdas cómo se escribía algo.</p></div>
@@ -4206,7 +4210,7 @@ ${PRO("Un proyecto propio terminado, publicado y con un README claro vale más q
   const TUTOR_RULES = "Eres el tutor de una app para aprender a programar desde cero, en español. La persona no tiene experiencia previa. Responde en español neutro, con frases cortas y claras, tuteando. Explica cualquier término técnico la primera vez que lo uses. Sé cálido y alentador, pero preciso. Máximo 220 palabras.";
   function tutorLessonHTML(id) {
     return `<section class="sec tutor-wrap" id="sec-tutor" ${sampleFn ? "" : "hidden"}><h2><span class="n">?</span>¿Te quedó una duda?</h2>
-      <div class="card tutor"><label class="small muted" for="lesson-q">Pregúntale al tutor sobre esta lección. Por ejemplo: «no entiendo la diferencia entre &lt;- y =».</label>
+      <div class="card tutor"><label class="small muted" for="lesson-q">Pregúntale al tutor sobre esta lección. Por ejemplo: «no entiendo la diferencia entre = y ==».</label>
       <textarea id="lesson-q" placeholder="Escribe tu pregunta…"></textarea>
       <div class="row"><button class="btn primary" data-act="ask-lesson" data-id="${id}">Preguntar</button><button class="btn" id="lesson-stop" hidden>Detener</button></div>
       <div class="answer" id="lesson-answer" hidden></div></div></section>`;
@@ -4219,11 +4223,11 @@ ${PRO("Un proyecto propio terminado, publicado y con un README claro vale más q
       { name: "Hola mundo", code: 'Algoritmo HolaMundo\n\tEscribir "Hola, mundo"\nFinAlgoritmo' },
       { name: "Leer y mostrar", code: 'Algoritmo Saludo\n\tDefinir nombre Como Cadena\n\tEscribir "¿Cómo te llamas?"\n\tLeer nombre\n\tEscribir "Hola, ", nombre\nFinAlgoritmo' },
       { name: "Si / SiNo", code: 'Algoritmo Decision\n\tDefinir n Como Entero\n\tLeer n\n\tSi n > 0 Entonces\n\t\tEscribir "Positivo"\n\tSiNo\n\t\tEscribir "Cero o negativo"\n\tFinSi\nFinAlgoritmo' },
-      { name: "Bucle Para", code: 'Algoritmo Contar\n\tPara i <- 1 Hasta 10 Hacer\n\t\tEscribir i\n\tFinPara\nFinAlgoritmo' },
-      { name: "Bucle Mientras", code: 'Algoritmo Mientras\n\ti <- 1\n\tMientras i <= 5 Hacer\n\t\tEscribir i\n\t\ti <- i + 1\n\tFinMientras\nFinAlgoritmo' },
-      { name: "Arreglo", code: 'Algoritmo Arreglo\n\tDimension v[5]\n\tPara i <- 0 Hasta 4 Hacer\n\t\tv[i] <- i * 10\n\tFinPara\n\tEscribir v\nFinAlgoritmo' },
-      { name: "Función", code: 'Funcion r <- Doble(n)\n\tr <- n * 2\nFinFuncion\n\nAlgoritmo UsarFuncion\n\tEscribir Doble(21)\nFinAlgoritmo' },
-      { name: "Juego: adivina el número", code: 'Algoritmo Adivina\n\tsecreto <- aleatorio(1, 100)\n\tintentos <- 0\n\tRepetir\n\t\tEscribir "Adivina (1-100):"\n\t\tLeer n\n\t\tintentos <- intentos + 1\n\t\tSi n < secreto Entonces\n\t\t\tEscribir "Más alto"\n\t\tSiNo\n\t\t\tSi n > secreto Entonces\n\t\t\t\tEscribir "Más bajo"\n\t\t\tFinSi\n\t\tFinSi\n\tHasta Que n = secreto\n\tEscribir "¡Lo lograste en ", intentos, " intentos!"\nFinAlgoritmo' },
+      { name: "Bucle Para", code: 'Algoritmo Contar\n\tPara i = 1 Hasta 10 Hacer\n\t\tEscribir i\n\tFinPara\nFinAlgoritmo' },
+      { name: "Bucle Mientras", code: 'Algoritmo Mientras\n\ti = 1\n\tMientras i <= 5 Hacer\n\t\tEscribir i\n\t\ti = i + 1\n\tFinMientras\nFinAlgoritmo' },
+      { name: "Arreglo", code: 'Algoritmo Arreglo\n\tDimension v[5]\n\tPara i = 0 Hasta 4 Hacer\n\t\tv[i] = i * 10\n\tFinPara\n\tEscribir v\nFinAlgoritmo' },
+      { name: "Función", code: 'Funcion r = Doble(n)\n\tr = n * 2\nFinFuncion\n\nAlgoritmo UsarFuncion\n\tEscribir Doble(21)\nFinAlgoritmo' },
+      { name: "Juego: adivina el número", code: 'Algoritmo Adivina\n\tsecreto = aleatorio(1, 100)\n\tintentos = 0\n\tRepetir\n\t\tEscribir "Adivina (1-100):"\n\t\tLeer n\n\t\tintentos = intentos + 1\n\t\tSi n < secreto Entonces\n\t\t\tEscribir "Más alto"\n\t\tSiNo\n\t\t\tSi n > secreto Entonces\n\t\t\t\tEscribir "Más bajo"\n\t\t\tFinSi\n\t\tFinSi\n\tHasta Que n == secreto\n\tEscribir "¡Lo lograste en ", intentos, " intentos!"\nFinAlgoritmo' },
     ],
     js: [
       { name: "Hola mundo", code: 'console.log("Hola, mundo");' },
@@ -4236,14 +4240,14 @@ ${PRO("Un proyecto propio terminado, publicado y con un README claro vale más q
     ],
   };
   const KEYS = {
-    pseudo: ["<-", '"', "(", ")", "[", "]", ",", "=", "<>", "<", ">", "+", "-", "*", "/", ":"],
+    pseudo: ["=", "==", '"', "(", ")", "[", "]", ",", "<>", "<", ">", "+", "-", "*", "/", ":"],
     js: ["{", "}", "(", ")", "[", "]", ";", "=", "===", "=>", "`", "${}", '"', "+", "<", ">", "&&", "||", "!"],
   };
   const SNIPS = {
     pseudo: [
       ["Escribir", 'Escribir ""', -1], ["Leer", "Leer ", 0], ["Definir", "Definir  Como Entero", -12],
       ["Si", "Si  Entonces\n\t\nFinSi", -15], ["SiNo", "SiNo\n\t", 0], ["Mientras", "Mientras  Hacer\n\t\nFinMientras", -20],
-      ["Para", "Para i <- 1 Hasta 10 Hacer\n\t\nFinPara", -8], ["Repetir", "Repetir\n\t\nHasta Que ", 0],
+      ["Para", "Para i = 1 Hasta 10 Hacer\n\t\nFinPara", -8], ["Repetir", "Repetir\n\t\nHasta Que ", 0],
     ],
     js: [
       ["log", "console.log();", -2], ["let", "let  = ;", -5], ["if", "if () {\n  \n}", -7], ["else", " else {\n  \n}", -2],
@@ -4579,7 +4583,7 @@ ${PRO("Un proyecto propio terminado, publicado y con un README claro vale más q
     },
     tutorPrompt(question) {
       const ex = this.ex;
-      const lang = this.lang === "js" ? "JavaScript" : "pseudocódigo en español estilo PSeInt (asignación con <-, arreglos con índice base 0, bloques Si/FinSi, Mientras/FinMientras, Para/FinPara)";
+      const lang = this.lang === "js" ? "JavaScript" : "pseudocódigo en español estilo PSeInt (asignación con =, comparación de igualdad con ==, arreglos con índice base 0, bloques Si/FinSi, Mientras/FinMientras, Para/FinPara)";
       return TUTOR_RULES + "\n\nLa persona está en el Laboratorio escribiendo " + lang + "." +
         (ex ? "\n\nEstá resolviendo este reto:\nTítulo: " + ex.title + "\nEnunciado: " + ex.text.replace(/<[^>]+>/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">") + "\nIMPORTANTE: no escribas la solución completa del reto. Explica qué falla o qué falta y da una pista concreta para el siguiente paso." : "") +
         "\n\nSu código:\n```\n" + this.getCode().slice(0, 6000) + "\n```" +
@@ -4721,7 +4725,7 @@ ${PRO("Un proyecto propio terminado, publicado y con un README claro vale más q
       if (!q) { toast("Escribe tu pregunta primero"); $("#lesson-q").focus(); return; }
       const l = LESSONS[b.dataset.id];
       const ctx = l.sections.map((s) => "- " + s.h + ": " + s.body.replace(/<div class="code"[^>]*><\/div>/g, " [ejemplo de código] ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 500)).join("\n");
-      const prompt = TUTOR_RULES + "\n\nLa persona está leyendo la lección «" + l.title + "» (" + l.summary + ")." + (l.lang === "js" ? " El lenguaje es JavaScript." : " Se usa pseudocódigo en español estilo PSeInt (asignación con <-, arreglos con índice base 0).") + "\nContenido de la lección, resumido:\n" + ctx + "\n\nSu pregunta: " + q + "\n\nResponde la pregunta con un ejemplo pequeño si ayuda.";
+      const prompt = TUTOR_RULES + "\n\nLa persona está leyendo la lección «" + l.title + "» (" + l.summary + ")." + (l.lang === "js" ? " El lenguaje es JavaScript." : " Se usa pseudocódigo en español estilo PSeInt (asignación con =, comparación de igualdad con ==, arreglos con índice base 0).") + "\nContenido de la lección, resumido:\n" + ctx + "\n\nSu pregunta: " + q + "\n\nResponde la pregunta con un ejemplo pequeño si ayuda.";
       askTutor(prompt, $("#lesson-answer"), b, $("#lesson-stop"));
     },
   };
